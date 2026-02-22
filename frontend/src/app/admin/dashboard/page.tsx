@@ -79,8 +79,8 @@ export default function AdminDashboard() {
     setLoading(true);
     setError(null);
     try {
-      const res = await httpClient.get<{ data: DashboardData }>('/api/stats/dashboard');
-      setData(res.data);
+      const res = await httpClient.get<DashboardData>('/api/stats/dashboard');
+      setData(res);
     } catch {
       setError('Impossible de charger les statistiques.');
     } finally {

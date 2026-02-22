@@ -21,13 +21,15 @@ exports.getAllUsers = async (req, res) => {
 
     res.status(200).json({
       success: true,
-      count: users.length,
-      data: users,
-      pagination: {
-        current: parseInt(page),
-        pages: Math.ceil(total / limit),
-        total
-      }
+      data: {
+        users,
+        pagination: {
+          current: parseInt(page),
+          pages:   Math.ceil(total / limit),
+          total,
+          limit:   parseInt(limit),
+        },
+      },
     });
   } catch (error) {
     console.error('Erreur récupération utilisateurs:', error);
@@ -120,7 +122,7 @@ exports.deactivateUser = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Utilisateur désactivé avec succès',
-      data: user
+      data: { user },
     });
   } catch (error) {
     console.error('Erreur désactivation utilisateur:', error);
@@ -152,7 +154,7 @@ exports.activateUser = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Utilisateur activé avec succès',
-      data: user
+      data: { user },
     });
   } catch (error) {
     console.error('Erreur activation utilisateur:', error);
@@ -220,7 +222,7 @@ exports.updateUserRole = async (req, res) => {
     res.status(200).json({
       success: true,
       message: 'Rôle utilisateur mis à jour',
-      data: user
+      data: { user },
     });
   } catch (error) {
     console.error('Erreur mise à jour rôle:', error);
