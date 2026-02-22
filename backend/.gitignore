@@ -4,8 +4,7 @@
 /node_modules
 
 # Environnement variables
-.env
-.env.test
+.env*
 
 # Fichiers de logs
 *.log
