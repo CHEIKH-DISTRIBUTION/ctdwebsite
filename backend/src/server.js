@@ -37,8 +37,12 @@ app.use(cors({
   credentials: true,
 }));
 
-// NoSQL injection prevention: strips MongoDB operators ($, .) from req.body / query / params
-app.use(mongoSanitize());
+// NoSQL injection prevention — Express 5 compat: req.query is a read-only getter
+// so we sanitize only req.body using the sanitize() helper directly.
+app.use((req, _res, next) => {
+  if (req.body) req.body = mongoSanitize.sanitize(req.body);
+  next();
+});
 
 // HTTP Parameter Pollution prevention
 app.use(hpp());

@@ -58,7 +58,7 @@ const seedData = async () => {
             }
         ];
 
-        await Category.insertMany(categories);
+        await Promise.all(categories.map(c => Category.create(c)));
         console.log('Catégories créées');
 
         // Créer des produits d'exemple

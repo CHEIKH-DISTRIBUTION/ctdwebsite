@@ -60,6 +60,6 @@ const paymentSchema = new mongoose.Schema({
 paymentSchema.index({ order: 1 });
 paymentSchema.index({ user: 1 });
 paymentSchema.index({ status: 1 });
-paymentSchema.index({ transactionId: 1 });
+// transactionId a déjà unique:true → index créé automatiquement, pas besoin de schema.index()
 
 module.exports = mongoose.model('Payment', paymentSchema);
