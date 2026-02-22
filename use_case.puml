@@ -1,0 +1,49 @@
+@startuml UseCase_CheikhDistribution
+left to right direction
+skinparam packageStyle rectangle
+
+actor Visiteur
+actor "Client connecté" as Client
+actor Livreur
+actor Administrateur
+actor "Système de paiement mobile\n(Wave / Orange Money)" as Paiement
+
+rectangle "Plateforme e-commerce" {
+  usecase "Parcourir le catalogue" as UC1
+  usecase "Créer compte / Se connecter" as UC2
+  usecase "Gérer panier" as UC3
+  usecase "Passer commande" as UC4
+  usecase "Payer commande" as UC5
+  usecase "Suivre commande" as UC6
+  usecase "Noter livreur" as UC7
+  usecase "Recevoir mission" as UC8
+  usecase "Mettre à jour statut de livraison" as UC9
+  usecase "Gérer produits / stock" as UC10
+  usecase "Gérer utilisateurs" as UC11
+  usecase "Gérer promotions / rapports" as UC12
+}
+
+Visiteur --> UC1
+Visiteur --> UC2
+
+Client --> UC1
+Client --> UC2
+Client --> UC3
+Client --> UC4
+Client --> UC5
+Client --> UC6
+Client --> UC7
+
+Livreur --> UC8
+Livreur --> UC9
+
+Administrateur --> UC10
+Administrateur --> UC11
+Administrateur --> UC12
+
+UC4 .> UC5 : <<include>>
+UC5 --> Paiement : initie transaction
+Paiement --> UC5 : retour statut
+UC9 --> UC6 : mise à jour visible par le client
+
+@enduml
