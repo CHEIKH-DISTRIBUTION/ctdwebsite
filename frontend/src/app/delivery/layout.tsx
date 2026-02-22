@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Truck, LogOut, Package } from 'lucide-react';
+import { Truck, LogOut, Package, ChevronLeft } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function DeliveryLayout({ children }: { children: React.ReactNode }) {
@@ -48,6 +48,18 @@ export default function DeliveryLayout({ children }: { children: React.ReactNode
       {/* Header */}
       <header className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center gap-3">
+          {/* Back to admin — only visible for admins */}
+          {user?.role === 'admin' && (
+            <Link
+              href="/admin/dashboard"
+              className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-[#001489] transition-colors px-2 py-1 rounded-lg hover:bg-gray-100 shrink-0"
+              title="Retour à l'administration"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              Admin
+            </Link>
+          )}
+
           {/* Brand */}
           <Link href="/delivery" className="flex items-center gap-2 flex-1">
             <div
