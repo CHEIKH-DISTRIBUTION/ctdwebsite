@@ -1,0 +1,37 @@
+# Fichiers et dossiers à ignorer pour un projet Express.js
+
+# Dependencies
+/node_modules
+
+# Environnement variables
+.env
+.env.test
+
+# Fichiers de logs
+*.log
+logs/
+
+# Dossier des uploads
+/uploads
+
+# IDE/Editeur
+.vscode/
+.idea/
+
+# Fichiers système
+.DS_Store
+Thumbs.db
+
+# Fichiers de couverture
+coverage/
+
+# Fichiers de cache
+.cache/
+
+# Fichiers de build
+/dist/
+/build/
+
+# Fichiers temporaires
+*.tmp
+*.temp

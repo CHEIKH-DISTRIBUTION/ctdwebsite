@@ -1,0 +1,110 @@
+/* ============================================================
+ * Cheikh Distribution — Design Token System
+ *
+ * Single source of truth for every design decision.
+ * Imported in globals.css via  @import "../shared/styles/tokens.css"
+ *
+ * Brand palette (Pantone references):
+ *   --brand-primary   → Pantone 711 C         #F9461C  tomato red
+ *   --brand-secondary → Pantone Reflex Blue C  #001489  deep navy
+ *   --brand-accent    → Pantone 1235 C         #FFB500  amber gold
+ * ============================================================ */
+
+:root {
+  /* ── Primary · Pantone 711 C ───────────────────────────── */
+  --brand-primary:        #F9461C;
+  --brand-primary-hover:  #D93810;
+  --brand-primary-active: #C2300E;
+  --brand-primary-light:  #FFF0EC;
+  --brand-primary-muted:  rgba(249, 70, 28, 0.10);
+  --brand-primary-border: rgba(249, 70, 28, 0.25);
+
+  /* ── Secondary · Pantone Reflex Blue C ─────────────────── */
+  --brand-secondary:        #001489;
+  --brand-secondary-hover:  #001070;
+  --brand-secondary-active: #000D57;
+  --brand-secondary-light:  #EEF1FF;
+  --brand-secondary-muted:  rgba(0, 20, 137, 0.08);
+  --brand-secondary-border: rgba(0, 20, 137, 0.20);
+
+  /* ── Accent · Pantone 1235 C ────────────────────────────── */
+  --brand-accent:        #FFB500;
+  --brand-accent-hover:  #E09F00;
+  --brand-accent-active: #CC8F00;
+  --brand-accent-light:  #FFF8E6;
+  --brand-accent-muted:  rgba(255, 181, 0, 0.12);
+
+  /* ── Surface / Background scale ─────────────────────────── */
+  --surface-base:   #FFFFFF;
+  --surface-subtle: #FAFAFA;
+  --surface-muted:  #F5F5F5;
+  --surface-raised: #FFFFFF;
+
+  /* ── Text scale ─────────────────────────────────────────── */
+  --text-primary:   #1A1A1A;
+  --text-secondary: #525252;
+  --text-muted:     #8A8A8A;
+  --text-disabled:  #BBBBBB;
+  --text-inverse:   #FFFFFF;
+
+  /* ── Border ─────────────────────────────────────────────── */
+  --border-light:  rgba(0, 0, 0, 0.06);
+  --border-base:   rgba(0, 0, 0, 0.10);
+  --border-strong: rgba(0, 0, 0, 0.18);
+
+  /* ── Elevation / Shadows ────────────────────────────────── */
+  --shadow-xs:          0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm:          0 1px 4px rgba(0, 0, 0, 0.07);
+  --shadow-md:          0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg:          0 8px 24px rgba(0, 0, 0, 0.10);
+  --shadow-xl:          0 16px 48px rgba(0, 0, 0, 0.12);
+  --shadow-card:        0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover:  0 8px 20px rgba(0, 0, 0, 0.10), 0 2px 6px rgba(0, 0, 0, 0.06);
+  --shadow-primary:     0 4px 16px rgba(249, 70, 28, 0.28);
+  --shadow-secondary:   0 4px 16px rgba(0, 20, 137, 0.22);
+
+  /* ── Radius ─────────────────────────────────────────────── */
+  --radius-xs:   3px;
+  --radius-sm:   6px;
+  --radius-md:   10px;
+  --radius-lg:   14px;
+  --radius-xl:   20px;
+  --radius-2xl:  28px;
+  --radius-pill: 9999px;
+
+  /* ── Transitions ─────────────────────────────────────────── */
+  --ease-out:    cubic-bezier(0.0, 0.0, 0.2, 1);
+  --ease-inout:  cubic-bezier(0.4, 0.0, 0.2, 1);
+  --transition-fast: 150ms cubic-bezier(0.0, 0.0, 0.2, 1);
+  --transition-base: 200ms cubic-bezier(0.0, 0.0, 0.2, 1);
+  --transition-slow: 300ms cubic-bezier(0.0, 0.0, 0.2, 1);
+
+  /* ── Spacing scale (matches Tailwind 4px base) ───────────── */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── Typography ─────────────────────────────────────────── */
+  --font-size-xs:   0.6875rem;   /* 11px */
+  --font-size-sm:   0.8125rem;   /* 13px */
+  --font-size-base: 0.9375rem;   /* 15px */
+  --font-size-md:   1rem;        /* 16px */
+  --font-size-lg:   1.125rem;    /* 18px */
+  --font-size-xl:   1.25rem;     /* 20px */
+  --font-size-2xl:  1.5rem;      /* 24px */
+  --font-size-3xl:  1.875rem;    /* 30px */
+  --font-size-price: 1.375rem;   /* 22px — product price */
+
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+  --font-weight-heavy:    800;
+}
