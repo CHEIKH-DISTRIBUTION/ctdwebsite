@@ -4,6 +4,8 @@ import React, { useEffect, useState } from 'react';
 import { notFound } from 'next/navigation';
 import { catalogApi } from '@/features/catalog/api/catalog.api';
 import { useCartStore } from '@/features/cart/store/cartStore';
+import { useFavorites } from '@/features/favorites';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import type { ProductResponse } from '@/shared/types/product.types';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -33,10 +35,11 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const [notFoundState, setNotFound] = useState(false);
   const [quantity, setQuantity]     = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
-  const [isLiked, setIsLiked]       = useState(false);
   const [activeTab, setActiveTab]   = useState('description');
 
   const { addItem } = useCartStore();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
 
   useEffect(() => {
@@ -89,9 +92,16 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
   const increment = () => setQuantity((q) => (q < product.stock ? q + 1 : q));
   const decrement = () => setQuantity((q) => (q > 1 ? q - 1 : 1));
 
-  const toggleLike = () => {
-    setIsLiked(!isLiked);
-    toast.info(isLiked ? 'Retiré des favoris' : 'Ajouté aux favoris');
+  const liked = product ? isFavorite(product._id) : false;
+
+  const toggleLike = async () => {
+    if (!isAuthenticated) {
+      toast.info('Connectez-vous pour sauvegarder des favoris');
+      router.push('/login');
+      return;
+    }
+    await toggleFavorite(product!._id);
+    toast.success(liked ? 'Retiré des favoris' : 'Ajouté aux favoris', { duration: 2000 });
   };
 
   const shareProduct = () => {
@@ -114,7 +124,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
           </Link>
           <div className="flex-1" />
           <button onClick={toggleLike} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
-            <Heart className={`h-6 w-6 ${isLiked ? 'text-red-500 fill-red-500' : 'text-gray-400'}`} />
+            <Heart className={`h-6 w-6 transition-colors ${liked ? 'text-red-500 fill-red-500' : 'text-gray-400'}`} />
           </button>
           <button onClick={shareProduct} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
             <Share2 className="h-6 w-6 text-gray-400" />
