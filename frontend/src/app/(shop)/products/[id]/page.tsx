@@ -278,7 +278,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             </div>
 
             {/* Guarantees */}
-            <div className="grid grid-cols-3 gap-4 pt-6 border-t border-gray-200">
+            <div className="grid grid-cols-3 gap-2 sm:gap-4 pt-6 border-t border-gray-200">
               {[
                 { icon: Truck, label: 'Livraison rapide', sub: 'Sous 24h à Dakar', bg: 'bg-blue-50', iconColor: PRIMARY },
                 { icon: Shield, label: 'Paiement sécurisé', sub: '100% protégé', bg: 'bg-green-50', iconColor: '#28a745' },

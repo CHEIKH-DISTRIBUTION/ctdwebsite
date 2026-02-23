@@ -406,7 +406,7 @@ export default function CheckoutPage() {
               className="bg-white rounded-2xl p-6"
               style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.06)' }}
             >
-              <label className="flex items-start gap-3">
+              <label htmlFor="cgv" className="flex items-start gap-3 cursor-pointer">
                 <div className="relative flex-shrink-0 mt-0.5">
                   <input
                     type="checkbox"
@@ -421,7 +421,6 @@ export default function CheckoutPage() {
                       borderColor: isAgreedToTerms ? PRIMARY : '#D1D5DB',
                       background:  isAgreedToTerms ? PRIMARY : '#FFFFFF',
                     }}
-                    onClick={() => setIsAgreedToTerms(!isAgreedToTerms)}
                   >
                     {isAgreedToTerms && <Check className="h-3 w-3 text-white" strokeWidth={3} />}
                   </div>
