@@ -2,6 +2,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import type { ElementType } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/features/cart/store/cartStore';
 import { useAuthStore } from '@/features/auth/store/authStore';
@@ -34,7 +35,7 @@ const PAYMENT_METHODS: {
   id:           CheckoutPaymentMethod;
   label:        string;
   description:  string;
-  icon:         React.ElementType;
+  icon:         ElementType;
   bg:           string;
   instructions: string;
 }[] = [
@@ -119,7 +120,7 @@ export default function CheckoutPage() {
   }
 
   /* ── Empty cart state ── */
-  if (items.length === 0) {
+  if (items.length === 0 && packItems.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
         <motion.div

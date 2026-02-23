@@ -14,12 +14,12 @@ router.post('/', protect, OrderController.createOrder);
 // GET    /api/v2/orders/my-orders  → List the authenticated user's orders
 router.get('/my-orders', protect, OrderController.getMyOrders);
 
-// GET    /api/v2/orders/:id        → Get one order (own orders for customers)
-router.get('/:id', protect, OrderController.getOrder);
-
-// ── Admin routes ─────────────────────────────────────────────────────────────
+// ── Admin routes — must be declared before /:id ───────────────────────────────
 
 // GET    /api/v2/orders/admin/all  → List all orders with filters
 router.get('/admin/all', protect, authorize('admin'), OrderController.getAllOrders);
+
+// GET    /api/v2/orders/:id        → Get one order (own orders for customers)
+router.get('/:id', protect, OrderController.getOrder);
 
 module.exports = router;
