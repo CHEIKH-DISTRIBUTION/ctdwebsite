@@ -32,8 +32,15 @@ const app = express();
 app.use(helmet());
 
 // CORS — credentials mode required for httpOnly refresh-token cookie
+// CLIENT_URL supports comma-separated origins for Vercel preview deployments:
+//   CLIENT_URL=https://cheikh-distribution.vercel.app,https://preview-xxx.vercel.app
+const _allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:3000')
+  .split(',').map((s) => s.trim());
 app.use(cors({
-  origin:      process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: (origin, callback) => {
+    if (!origin || _allowedOrigins.includes(origin)) callback(null, true);
+    else callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 }));
 

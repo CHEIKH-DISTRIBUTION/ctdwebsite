@@ -9,9 +9,9 @@ const audit         = require('../infrastructure/logger/auditLogger');
 
 // ── Token helpers ──────────────────────────────────────────────────────────
 
-/** Short-lived access token — 15 minutes. */
+/** Access token — lifetime controlled by JWT_EXPIRE env variable (default 30d). */
 const generateAccessToken = (userId) =>
-  jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: '15m' });
+  jwt.sign({ id: userId }, process.env.JWT_SECRET, { expiresIn: process.env.JWT_EXPIRE || '30d' });
 
 /** 48-byte random refresh token. Returns both the plain value and its SHA-256 hash. */
 const generateRefreshToken = () => {
@@ -28,7 +28,10 @@ const getRefreshCookie = (req) => {
   return match.split('=').slice(1).join('=').trim() || null;
 };
 
-/** Set the refresh token as an httpOnly, Secure, SameSite cookie scoped to /api/auth/refresh. */
+/** Set the refresh token as an httpOnly, Secure, SameSite cookie scoped to /api/auth/refresh.
+ *  SameSite=None in production because frontend (Vercel) and backend (Railway) are cross-origin.
+ *  SameSite=None requires Secure, which is already set in production.
+ */
 const setRefreshCookie = (res, plainToken) => {
   const isProd  = process.env.NODE_ENV === 'production';
   const maxAge  = 7 * 24 * 60 * 60; // 7 days in seconds
@@ -37,7 +40,7 @@ const setRefreshCookie = (res, plainToken) => {
     'HttpOnly',
     `Max-Age=${maxAge}`,
     'Path=/api/auth/refresh',
-    `SameSite=${isProd ? 'Strict' : 'Lax'}`,
+    `SameSite=${isProd ? 'None' : 'Lax'}`,
     ...(isProd ? ['Secure'] : []),
   ];
   res.setHeader('Set-Cookie', parts.join('; '));
@@ -48,7 +51,7 @@ const clearRefreshCookie = (res) => {
   const isProd = process.env.NODE_ENV === 'production';
   res.setHeader(
     'Set-Cookie',
-    `refreshToken=; HttpOnly; Max-Age=0; Path=/api/auth/refresh; SameSite=${isProd ? 'Strict' : 'Lax'}`
+    `refreshToken=; HttpOnly; Max-Age=0; Path=/api/auth/refresh; SameSite=${isProd ? 'None' : 'Lax'}${isProd ? '; Secure' : ''}`
   );
 };
 

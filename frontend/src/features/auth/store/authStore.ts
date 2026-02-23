@@ -42,8 +42,8 @@ function applyTokens(
   user: UserResponse
 ) {
   localStorage.setItem('token', token);
-  // Short-lived cookie for middleware/SSR reads — 15 min matches access token
-  const maxAge = 15 * 60;
+  // Cookie for middleware/SSR reads — 30 days matches JWT_EXPIRE
+  const maxAge = 30 * 24 * 60 * 60;
   document.cookie = `token=${token}; path=/; SameSite=Lax; Max-Age=${maxAge}`;
   set({ token, isAuthenticated: true, user });
 }
@@ -165,8 +165,8 @@ export const useAuthStore = create<AuthState>()(
 if (typeof window !== 'undefined') {
   window.addEventListener('auth:token-refreshed', ((e: CustomEvent<{ token: string }>) => {
     useAuthStore.setState({ token: e.detail.token });
-    // Keep short-lived cookie in sync
-    const maxAge = 15 * 60;
+    // Keep cookie in sync with JWT_EXPIRE (30 days)
+    const maxAge = 30 * 24 * 60 * 60;
     document.cookie = `token=${e.detail.token}; path=/; SameSite=Lax; Max-Age=${maxAge}`;
   }) as EventListener);
 

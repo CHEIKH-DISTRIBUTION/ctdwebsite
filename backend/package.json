@@ -7,7 +7,7 @@
     "test": "jest",
     "test:e2e": "jest --config jest.e2e.config.js --runInBand --forceExit",
     "dev": "nodemon src/server.js",
-    "start": "nodemon src/server.js",
+    "start": "node src/server.js",
     "server": "nodemon src/server.js",
     "server:prod": "node src/server.js",
     "seed": "node src/scripts/seed.js"
