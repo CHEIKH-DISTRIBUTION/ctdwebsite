@@ -3,6 +3,14 @@ import { persist } from 'zustand/middleware';
 import { favoritesApi } from '../api/favorites.api';
 import type { ProductResponse } from '@/shared/types/product.types';
 
+/**
+ * Module-level generation counter.
+ * Incremented before every toggle API call.
+ * fetchFavorites captures the counter at start; if the counter changed while
+ * the request was in flight, it means a toggle happened → don't overwrite ids.
+ */
+let _toggleGen = 0;
+
 interface FavoritesState {
   /** Product IDs — persisted locally for instant isFavorite() checks */
   ids: string[];
@@ -10,10 +18,10 @@ interface FavoritesState {
   products: ProductResponse[];
   isLoadingProducts: boolean;
 
-  isFavorite:      (productId: string) => boolean;
-  toggleFavorite:  (productId: string) => Promise<void>;
-  fetchFavorites:  () => Promise<void>;
-  clear:           () => void;
+  isFavorite:     (productId: string) => boolean;
+  toggleFavorite: (productId: string) => Promise<void>;
+  fetchFavorites: () => Promise<void>;
+  clear:          () => void;
 }
 
 export const useFavoritesStore = create<FavoritesState>()(
@@ -26,8 +34,10 @@ export const useFavoritesStore = create<FavoritesState>()(
       isFavorite: (productId) => get().ids.includes(productId),
 
       toggleFavorite: async (productId) => {
-        // Optimistic update
+        _toggleGen++; // Invalidate any in-flight fetchFavorites
         const wasIn = get().ids.includes(productId);
+
+        // Optimistic update
         set((s) => ({
           ids:      wasIn ? s.ids.filter((id) => id !== productId) : [...s.ids, productId],
           products: wasIn ? s.products.filter((p) => p._id !== productId) : s.products,
@@ -38,24 +48,30 @@ export const useFavoritesStore = create<FavoritesState>()(
           // Reconcile with server truth
           set({ ids: favoriteIds });
         } catch {
-          // Revert on failure
+          // Revert optimistic update on network/server error
           set((s) => ({
-            ids: wasIn ? [...s.ids, productId] : s.ids.filter((id) => id !== productId),
+            ids: wasIn
+              ? [...s.ids, productId]
+              : s.ids.filter((id) => id !== productId),
           }));
         }
       },
 
       fetchFavorites: async () => {
         set({ isLoadingProducts: true });
+        const genAtStart = _toggleGen;
         try {
           const { favorites } = await favoritesApi.getFavorites();
-          set({
+          set((s) => ({
             products: favorites,
-            ids:      favorites.map((p) => p._id),
-          });
+            isLoadingProducts: false,
+            // Only overwrite ids if no toggle happened while we were fetching.
+            // If a toggle fired mid-flight, the toggle's result is more up-to-date.
+            ...(genAtStart === _toggleGen
+              ? { ids: favorites.map((p) => p._id) }
+              : {}),
+          }));
         } catch {
-          // Silently fail — ids from localStorage are still usable
-        } finally {
           set({ isLoadingProducts: false });
         }
       },

@@ -41,9 +41,11 @@ exports.toggleFavorite = async (req, res) => {
     await user.save();
 
     res.json({
-      success:    true,
-      isFavorite: !alreadyFav,
-      favoriteIds: user.favorites.map((id) => id.toString()),
+      success: true,
+      data: {
+        isFavorite:  !alreadyFav,
+        favoriteIds: user.favorites.map((id) => id.toString()),
+      },
     });
   } catch (err) {
     console.error('toggleFavorite error:', err);
