@@ -7,13 +7,14 @@ import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge'
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { StarIcon, Loader2, AlertCircle, CheckCircle2, Package, CreditCard } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { toast } from 'sonner';
 import { ordersApi } from '@/features/orders/api/orders.api';
 import { checkoutApi } from '@/features/checkout/api/checkout.api';
+import { useCartStore } from '@/features/cart/store/cartStore';
 
 const PAYMENT_LABELS: Record<string, string> = {
   wave:          'Wave',
@@ -62,6 +63,14 @@ function ConfirmedBanner({ orderNumber }: { orderNumber: string }) {
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   const { order, isLoading, error } = useOrder(params.id);
+  const clearCart = useCartStore((s) => s.clearCart);
+
+  // Clear the cart once the user lands on the confirmation page.
+  // Done here (not in useCheckout) to avoid a Zustand re-render race with router.push.
+  useEffect(() => {
+    clearCart();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const router = useRouter();
   const [rating, setRating]           = useState(0);

@@ -133,23 +133,22 @@ export function useCheckout() {
             method:    paymentMethod,
             ...(paymentData.nextAction ? { paymentUrl: paymentData.nextAction } : {}),
           });
-          clearCart();
           router.push(`/payment/pending?${pendingUrl.toString()}`);
         } catch {
           // Gateway call failed — order is created, user can pay later
           toast.error("Le paiement n'a pas pu être initié. Retrouvez votre commande dans votre espace.");
-          clearCart();
           router.push(`/orders/${result.order._id}?confirmed=1`);
         }
         return;
       }
 
       // ── Cash / bank transfer — no external payment needed ─────────────────
+      // clearCart() is intentionally called on the destination page (orders/[id])
+      // when confirmed=1 is detected — avoids re-render race with router.push
       toast.success('Commande créée avec succès', {
         description: `Référence : ${result.order.orderNumber}`,
         duration: 4000,
       });
-      clearCart();
       router.push(`/orders/${result.order._id}?confirmed=1`);
     } catch (error) {
       if (error instanceof ApiError) {
