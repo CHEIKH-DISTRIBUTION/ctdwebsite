@@ -294,8 +294,8 @@ export default function AccountPage() {
                 <TabsContent value="profile">
                   <Card className="border-gray-200 shadow-lg rounded-2xl">
                     <CardHeader>
-                      <div className="flex flex-wrap items-start gap-3">
-                        <CardTitle className="text-gray-800 flex items-center gap-2 flex-1 min-w-0">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <CardTitle className="text-gray-800 flex items-center gap-2">
                           <User className="h-5 w-5 flex-shrink-0" style={{ color: COLORS.primary }} />
                           Informations personnelles
                         </CardTitle>
@@ -303,13 +303,13 @@ export default function AccountPage() {
                           <Button
                             variant="outline"
                             onClick={() => setIsEditing(true)}
-                            className="flex items-center gap-2 rounded-xl border-[#284bcc] text-[#284bcc] hover:bg-[#284bcc]/10 transition-all flex-shrink-0"
+                            className="flex items-center gap-2 rounded-xl border-[#284bcc] text-[#284bcc] hover:bg-[#284bcc]/10 transition-all self-start sm:self-auto"
                           >
                             <Edit3 className="h-4 w-4" />
                             Modifier
                           </Button>
                         ) : (
-                          <div className="flex items-center gap-2 flex-shrink-0">
+                          <div className="flex items-center gap-2 self-start sm:self-auto">
                             <Button
                               variant="outline"
                               onClick={handleCancelEdit}
