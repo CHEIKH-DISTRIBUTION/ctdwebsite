@@ -28,6 +28,11 @@ connectDB();
 
 const app = express();
 
+// Render (and most cloud proxies) forward requests through a load-balancer that
+// sets X-Forwarded-For. Without trust proxy, express-rate-limit throws a
+// validation error and IP-based rate limiting is unreliable.
+app.set('trust proxy', 1);
+
 // ── Security middleware stack ──────────────────────────────────────────────
 app.use(helmet());
 
