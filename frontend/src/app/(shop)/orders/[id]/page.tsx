@@ -7,7 +7,7 @@ import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge'
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { StarIcon, Loader2, AlertCircle, CheckCircle2, Package, CreditCard } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -61,8 +61,9 @@ function ConfirmedBanner({ orderNumber }: { orderNumber: string }) {
   );
 }
 
-export default function OrderDetailPage({ params }: { params: { id: string } }) {
-  const { order, isLoading, error } = useOrder(params.id);
+export default function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
+  const { order, isLoading, error } = useOrder(id);
   const clearCart = useCartStore((s) => s.clearCart);
 
   // Clear the cart once the user lands on the confirmation page.
