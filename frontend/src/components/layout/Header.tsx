@@ -471,7 +471,7 @@ export function Header() {
                     <User className="h-4 w-4" /> Mon compte
                   </Link>
                   <button
-                    onClick={() => { logout(); setIsMenuOpen(false); }}
+                    onClick={() => { logout(); setIsMenuOpen(false); router.push('/'); }}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors hover:bg-red-50"
                     style={{ color: '#DC2626' }}
                   >

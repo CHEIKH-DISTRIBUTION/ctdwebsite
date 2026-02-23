@@ -18,6 +18,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { checkoutApi } from '../api/checkout.api';
 import { ApiError } from '@/shared/api/httpClient';
 import type { PaymentMethod, DeliveryAddress } from '@/shared/types/order.types';
+import { isValidSenegalPhone } from '@/shared/utils/phone';
 
 export type CheckoutPaymentMethod = 'wave' | 'orange_money' | 'cash' | 'bank_transfer';
 
@@ -90,6 +91,15 @@ export function useCheckout() {
       return;
     }
 
+    if (!isValidSenegalPhone(user.phone)) {
+      toast.error('Numéro de téléphone invalide', {
+        description: 'Veuillez entrer un numéro sénégalais valide (ex: 77 123 45 67).',
+        duration: 5000,
+      });
+      router.push('/account');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -136,7 +146,10 @@ export function useCheckout() {
           router.push(`/payment/pending?${pendingUrl.toString()}`);
         } catch {
           // Gateway call failed — order is created, user can pay later
-          toast.error("Le paiement n'a pas pu être initié. Retrouvez votre commande dans votre espace.");
+          toast.warning('Commande créée — paiement non initié', {
+            description: "Votre commande a bien été enregistrée. Vous pouvez payer depuis la page de votre commande.",
+            duration: 6000,
+          });
           router.push(`/orders/${result.order._id}?confirmed=1`);
         }
         return;

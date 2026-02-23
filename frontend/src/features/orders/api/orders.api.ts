@@ -24,4 +24,12 @@ export const ordersApi = {
   /** PUT /api/orders/:id/rate — rate a delivered order */
   rateOrder: (id: string, payload: { delivery: number; overall: number; comment?: string }) =>
     httpClient.put<void>(`/api/orders/${id}/rate`, payload),
+
+  /** PUT /api/orders/:id/cancel — cancel an order (customer) */
+  cancelOrder: (id: string) =>
+    httpClient.put<{ order: OrderResponse }>(`/api/orders/${id}/cancel`, {}),
+
+  /** PUT /api/orders/:id/payment-method — change payment method when payment pending/failed */
+  changePaymentMethod: (id: string, paymentMethod: 'wave' | 'orange_money' | 'cash' | 'bank_transfer') =>
+    httpClient.put<{ order: OrderResponse }>(`/api/orders/${id}/payment-method`, { paymentMethod }),
 };

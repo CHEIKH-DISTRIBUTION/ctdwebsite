@@ -10,6 +10,7 @@ const {
   getDeliveryOrders,
   confirmPayment,
   assignDelivery,
+  changePaymentMethod,
 } = require('../controllers/orderController');
 const { protect, authorize } = require('../middleware/auth');
 const { validateOrder } = require('../middleware/validation');
@@ -25,6 +26,7 @@ router.get('/admin/all',  protect, authorize('admin'),             getAllOrders)
 router.post('/',                    protect, validateOrder,                        createOrder);
 router.get('/:id',                  protect,                                       getOrder);
 router.put('/:id/cancel',           protect,                                       cancelOrder);
+router.put('/:id/payment-method',   protect,                                       changePaymentMethod);
 router.put('/:id/rate',             protect,                                       rateOrder);
 router.put('/:id/status',           protect, authorize('admin', 'delivery'),       updateOrderStatus);
 router.put('/:id/confirm-payment',  protect, authorize('admin'),                   confirmPayment);

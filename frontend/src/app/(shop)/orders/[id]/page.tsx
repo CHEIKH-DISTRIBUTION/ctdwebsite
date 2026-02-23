@@ -7,7 +7,7 @@ import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge'
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { StarIcon, Loader2, AlertCircle, CheckCircle2, Package, CreditCard } from 'lucide-react';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect, use, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -78,6 +78,9 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isRated, setIsRated]          = useState(false);
   const [isRetrying, setIsRetrying]   = useState(false);
+  const [isCancelling, setIsCancelling]         = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [isChangingPayment, setIsChangingPayment] = useState(false);
 
   const handlePaymentRetry = async () => {
     if (!order) return;
@@ -94,6 +97,35 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
     } catch {
       toast.error('Impossible de relancer le paiement. Veuillez réessayer.');
       setIsRetrying(false);
+    }
+  };
+
+  const handleCancelOrder = async () => {
+    if (!order) return;
+    setIsCancelling(true);
+    try {
+      await ordersApi.cancelOrder(order._id);
+      toast.success('Commande annulée');
+      router.refresh();
+    } catch {
+      toast.error('Impossible d\'annuler la commande. Veuillez contacter le support.');
+    } finally {
+      setIsCancelling(false);
+      setShowCancelConfirm(false);
+    }
+  };
+
+  const handleSwitchToCash = async () => {
+    if (!order) return;
+    setIsChangingPayment(true);
+    try {
+      await ordersApi.changePaymentMethod(order._id, 'cash');
+      toast.success('Mode de paiement changé en paiement à la livraison');
+      router.refresh();
+    } catch {
+      toast.error('Impossible de changer le mode de paiement.');
+    } finally {
+      setIsChangingPayment(false);
     }
   };
 
@@ -330,6 +362,59 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
             ) : (
               <p className="text-green-600 font-medium">Merci pour votre retour !</p>
             )}
+          </section>
+        )}
+
+        {/* Cancel order — only for pending/confirmed */}
+        {(order.status === 'pending' || order.status === 'confirmed') && (
+          <section className="bg-white p-6 rounded-lg shadow-sm border mb-8">
+            <h2 className="text-lg font-semibold mb-2 text-gray-800">Annuler la commande</h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Vous pouvez annuler votre commande tant qu&apos;elle n&apos;est pas en préparation.
+            </p>
+            {!showCancelConfirm ? (
+              <Button
+                variant="outline"
+                className="border-red-300 text-red-600 hover:bg-red-50"
+                onClick={() => setShowCancelConfirm(true)}
+              >
+                Annuler la commande
+              </Button>
+            ) : (
+              <div className="flex items-center gap-3">
+                <p className="text-sm font-medium text-gray-700">Confirmer l&apos;annulation ?</p>
+                <Button
+                  onClick={handleCancelOrder}
+                  disabled={isCancelling}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  {isCancelling ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Oui, annuler'}
+                </Button>
+                <Button variant="outline" onClick={() => setShowCancelConfirm(false)} disabled={isCancelling}>
+                  Non
+                </Button>
+              </div>
+            )}
+          </section>
+        )}
+
+        {/* Switch to cash — when wave/OM payment is pending or failed */}
+        {(order.paymentMethod === 'wave' || order.paymentMethod === 'orange_money') &&
+         (order.paymentStatus === 'pending' || order.paymentStatus === 'failed') && (
+          <section className="bg-amber-50 border border-amber-200 p-5 rounded-lg mb-8">
+            <p className="text-sm font-medium text-amber-800 mb-3">
+              Le paiement mobile n&apos;a pas abouti. Vous pouvez passer en paiement à la livraison.
+            </p>
+            <Button
+              onClick={handleSwitchToCash}
+              disabled={isChangingPayment}
+              variant="outline"
+              className="border-amber-500 text-amber-800 hover:bg-amber-100"
+            >
+              {isChangingPayment
+                ? <Loader2 className="h-4 w-4 animate-spin" />
+                : 'Passer en paiement à la livraison'}
+            </Button>
           </section>
         )}
 
