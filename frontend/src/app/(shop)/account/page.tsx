@@ -33,6 +33,7 @@ import {
 import Link from 'next/link';
 import { ordersApi } from '@/features/orders/api/orders.api';
 import { httpClient } from '@/shared/api/httpClient';
+import { useFavorites } from '@/features/favorites';
 import type { OrderResponse } from '@/shared/types/order.types';
 
 const COLORS = {
@@ -65,6 +66,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AccountPage() {
   const { user, logout, fetchProfile } = useAuthStore();
+  const { products: favoriteProducts, isLoadingProducts: favLoading, fetchFavorites, toggleFavorite } = useFavorites();
   const router = useRouter();
 
   const [isEditing, setIsEditing]   = useState(false);
@@ -508,27 +510,85 @@ export default function AccountPage() {
                 <TabsContent value="wishlist">
                   <Card className="border-gray-200 shadow-lg rounded-2xl">
                     <CardHeader>
-                      <CardTitle className="text-gray-800 flex items-center gap-2">
-                        <Heart className="h-5 w-5" style={{ color: COLORS.secondary }} />
-                        Mes produits favoris
-                      </CardTitle>
-                      <CardDescription>Retrouvez vos produits sauvegardés</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-center py-12">
-                        <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
-                        <h3 className="text-lg font-semibold text-gray-800 mb-2">Aucun favori</h3>
-                        <p className="text-gray-600 mb-6">
-                          La liste de favoris sera disponible prochainement.
-                        </p>
+                      <div className="flex items-center justify-between gap-3">
+                        <div>
+                          <CardTitle className="text-gray-800 flex items-center gap-2">
+                            <Heart className="h-5 w-5" style={{ color: COLORS.secondary }} />
+                            Mes produits favoris
+                          </CardTitle>
+                          <CardDescription>Retrouvez vos produits sauvegardés</CardDescription>
+                        </div>
                         <Button
-                          asChild
-                          className="rounded-xl"
-                          style={{ backgroundColor: COLORS.primary }}
+                          variant="outline"
+                          size="sm"
+                          className="rounded-xl text-xs flex-shrink-0"
+                          onClick={fetchFavorites}
+                          disabled={favLoading}
                         >
-                          <Link href="/products">Parcourir les produits</Link>
+                          {favLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Actualiser'}
                         </Button>
                       </div>
+                    </CardHeader>
+                    <CardContent>
+                      {favLoading ? (
+                        <div className="flex items-center justify-center py-12 text-gray-400">
+                          <Loader2 className="h-8 w-8 animate-spin" />
+                        </div>
+                      ) : favoriteProducts.length === 0 ? (
+                        <div className="text-center py-12">
+                          <Heart className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+                          <h3 className="text-lg font-semibold text-gray-800 mb-2">Aucun favori</h3>
+                          <p className="text-gray-600 mb-6">
+                            Cliquez sur le ❤️ d&apos;un produit pour l&apos;ajouter ici.
+                          </p>
+                          <Button
+                            asChild
+                            className="rounded-xl"
+                            style={{ backgroundColor: COLORS.primary }}
+                          >
+                            <Link href="/products">Parcourir les produits</Link>
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          {favoriteProducts.map((product) => {
+                            const img = product.images.find((i) => i.isPrimary)?.url ?? product.images[0]?.url ?? '/images/placeholder.jpg';
+                            return (
+                              <motion.div
+                                key={product._id}
+                                layout
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                exit={{ opacity: 0, scale: 0.95 }}
+                                className="flex gap-3 p-3 border border-gray-200 rounded-xl hover:shadow-md transition-all"
+                              >
+                                <Link href={`/products/${product._id}`} className="flex-shrink-0">
+                                  <div className="w-16 h-16 rounded-lg overflow-hidden bg-gray-100 relative">
+                                    <img src={img} alt={product.name} className="w-full h-full object-cover" />
+                                  </div>
+                                </Link>
+                                <div className="flex-1 min-w-0">
+                                  <Link href={`/products/${product._id}`}>
+                                    <p className="font-semibold text-sm text-gray-800 line-clamp-2 hover:text-[#001489] transition-colors">
+                                      {product.name}
+                                    </p>
+                                  </Link>
+                                  <p className="text-sm font-bold mt-1" style={{ color: COLORS.secondary }}>
+                                    {product.price.toLocaleString('fr-FR')} FCFA
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => toggleFavorite(product._id)}
+                                  className="flex-shrink-0 p-1.5 rounded-full hover:bg-red-50 transition-colors self-start"
+                                  title="Retirer des favoris"
+                                >
+                                  <Heart className="h-4 w-4 fill-red-500 text-red-500" />
+                                </button>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>

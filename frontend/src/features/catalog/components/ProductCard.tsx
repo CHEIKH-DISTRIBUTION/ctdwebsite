@@ -15,10 +15,12 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ShoppingCart, Eye, Star, Check } from 'lucide-react';
+import { ShoppingCart, Eye, Star, Check, Heart } from 'lucide-react';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { useCart } from '@/features/cart/hooks/useCart';
+import { useFavorites } from '@/features/favorites';
+import { useAuthStore } from '@/features/auth/store/authStore';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import type { ProductResponse } from '@/shared/types/product.types';
@@ -39,11 +41,29 @@ function getPrimaryImage(product: ProductResponse): string {
 
 export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
   const { addItem, isInCart, openDrawer } = useCart();
+  const { isFavorite, toggleFavorite } = useFavorites();
+  const { isAuthenticated } = useAuthStore();
   const router = useRouter();
   const inCart    = isInCart(product._id);
   const inStock   = product.stock > 0;
   const imageUrl  = getPrimaryImage(product);
+  const liked     = isFavorite(product._id);
   const [imageLoaded, setImageLoaded] = useState(false);
+
+  const handleToggleFavorite = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isAuthenticated) {
+      toast.info('Connectez-vous pour sauvegarder des favoris');
+      router.push('/login');
+      return;
+    }
+    await toggleFavorite(product._id);
+    toast.success(liked ? 'Retiré des favoris' : 'Ajouté aux favoris', {
+      description: product.name,
+      duration: 2000,
+    });
+  };
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -163,6 +183,15 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
           </span>
         )}
       </div>
+
+      {/* Favorite button — top-right corner */}
+      <button
+        onClick={handleToggleFavorite}
+        className="absolute top-2.5 right-2.5 z-10 p-1.5 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors shadow-sm"
+        title={liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+      >
+        <Heart className={`h-4 w-4 transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
+      </button>
 
       {/* Image */}
       <Link href={`/products/${product._id}`} className="relative overflow-hidden block">
