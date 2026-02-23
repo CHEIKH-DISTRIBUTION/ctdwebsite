@@ -413,6 +413,14 @@ exports.rateOrder = async (req, res) => {
       });
     }
 
+    // Vérifier que la commande n'a pas déjà été notée
+    if (order.rating && order.rating.ratedAt) {
+      return res.status(400).json({
+        success: false,
+        message: 'Vous avez déjà noté cette commande'
+      });
+    }
+
     // Ajouter la note
     order.rating = {
       delivery,

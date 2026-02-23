@@ -30,7 +30,7 @@ const router = express.Router();
 /** Auth routes (register / login / forgot-password): 10 attempts / IP / 15 min */
 const authLimiter = rateLimit({
   windowMs:        15 * 60 * 1000,
-  max:             10,
+  max:             process.env.NODE_ENV === 'production' ? 10 : 200,
   standardHeaders: true,
   legacyHeaders:   false,
   message:         { success: false, message: 'Trop de tentatives. Réessayez dans 15 minutes.' },
@@ -39,7 +39,7 @@ const authLimiter = rateLimit({
 /** Password reset / refresh: 5 attempts / IP / 15 min */
 const strictLimiter = rateLimit({
   windowMs:        15 * 60 * 1000,
-  max:             5,
+  max:             process.env.NODE_ENV === 'production' ? 5 : 200,
   standardHeaders: true,
   legacyHeaders:   false,
   message:         { success: false, message: 'Trop de tentatives. Réessayez dans 15 minutes.' },
