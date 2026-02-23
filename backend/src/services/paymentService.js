@@ -36,7 +36,8 @@ exports.initiateWavePayment = async ({ amount, phone, orderId, paymentId }) => {
       headers: {
         Authorization: `Bearer ${paymentConfig.wave.apiKey}`,
         'Content-Type': 'application/json'
-      }
+      },
+      timeout: 10000,
     });
 
     return {
@@ -60,7 +61,8 @@ exports.initiateOrangeMoneyPayment = async ({ amount, phone, orderId, paymentId 
       auth: {
         username: paymentConfig.orangeMoney.merchantKey,
         password: ''
-      }
+      },
+      timeout: 10000,
     });
 
     // 2. Initier le paiement

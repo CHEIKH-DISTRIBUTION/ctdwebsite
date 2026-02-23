@@ -63,18 +63,18 @@ export function OrderCard({ order }: OrderCardProps) {
         </div>
 
         {/* Quick stats */}
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-4">
+          <div className="text-center p-2 sm:p-3 bg-gray-50 rounded-lg">
             <div className="text-xs text-gray-500 mb-1">Articles</div>
-            <div className="font-semibold text-gray-800">{order.items.length}</div>
+            <div className="font-semibold text-gray-800 text-sm">{order.items.length}</div>
           </div>
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <div className="text-center p-2 sm:p-3 bg-gray-50 rounded-lg">
             <div className="text-xs text-gray-500 mb-1">Total</div>
-            <div className="font-semibold text-green-700">{order.total.toLocaleString()} FCFA</div>
+            <div className="font-semibold text-green-700 text-xs sm:text-sm">{order.total.toLocaleString()} FCFA</div>
           </div>
-          <div className="text-center p-3 bg-gray-50 rounded-lg">
+          <div className="text-center p-2 sm:p-3 bg-gray-50 rounded-lg overflow-hidden">
             <div className="text-xs text-gray-500 mb-1">Paiement</div>
-            <div className="font-semibold text-gray-800">
+            <div className="font-semibold text-gray-800 text-xs truncate">
               {PAYMENT_LABELS[order.paymentMethod] ?? order.paymentMethod}
             </div>
           </div>

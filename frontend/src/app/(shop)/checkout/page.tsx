@@ -256,7 +256,7 @@ export default function CheckoutPage() {
                   onChange={(e) => setDeliveryAddress({ ...deliveryAddress, street: e.target.value })}
                   className={inputCls}
                 />
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="text"
                     placeholder="Ville *"
