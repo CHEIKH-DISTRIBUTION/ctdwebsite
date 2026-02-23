@@ -1,34 +1,23 @@
 'use strict';
 
-const nodemailer = require('nodemailer');
-
 /**
- * emailService — transactional email via SMTP (Nodemailer).
+ * emailService — transactional email.
  *
- * Environment variables required (set in backend/.env):
- *   EMAIL_HOST, EMAIL_PORT, EMAIL_USER, EMAIL_PASS
+ * Priority order:
+ *   1. Resend HTTP API   (RESEND_API_KEY is set)          ← recommended for Render / cloud
+ *   2. Nodemailer SMTP   (EMAIL_HOST + EMAIL_USER are set) ← local dev / self-hosted
+ *   3. Console log       (no config at all)               ← CI / test environments
  *
- * In development with no SMTP config, emails are logged to the console
- * rather than throwing so the order-creation flow never fails due to email.
+ * Gmail SMTP times out from Render because Gmail blocks connections from
+ * cloud-provider IP ranges. Use Resend in production.
+ *
+ * Sign up at https://resend.com (free: 3 000 emails/month).
+ * Add RESEND_API_KEY to your Render environment variables.
  */
 
-function createTransporter() {
-  if (!process.env.EMAIL_HOST || !process.env.EMAIL_USER) {
-    return null; // SMTP not configured
-  }
+const nodemailer = require('nodemailer');
 
-  const port = parseInt(process.env.EMAIL_PORT || '587', 10);
-  return nodemailer.createTransport({
-    host:       process.env.EMAIL_HOST,
-    port,
-    secure:     port === 465,
-    requireTLS: port !== 465, // STARTTLS required for port 587 (Gmail)
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
-}
+// ── Helpers ────────────────────────────────────────────────────────────────
 
 const PAYMENT_LABELS = {
   wave:          'Wave',
@@ -37,20 +26,13 @@ const PAYMENT_LABELS = {
   bank_transfer: 'Virement bancaire',
 };
 
-/**
- * Format a number as XOF currency string.
- * @param {number} amount
- */
 function formatXOF(amount) {
   return `${amount.toLocaleString('fr-FR')} FCFA`;
 }
 
-/**
- * Build the HTML body for the order confirmation email.
- * @param {object} order  — Populated Mongoose document (or plain object with same shape)
- * @param {string} email  — Customer email address
- */
-function buildConfirmationHtml(order, email) {
+// ── HTML builders ──────────────────────────────────────────────────────────
+
+function buildConfirmationHtml(order) {
   const itemRows = order.items
     .map(
       (item) => `
@@ -76,9 +58,9 @@ function buildConfirmationHtml(order, email) {
 
         <!-- Header -->
         <tr>
-          <td style="background:#284bcc;padding:24px 32px;">
+          <td style="background:#001489;padding:24px 32px;">
             <h1 style="color:#fff;margin:0;font-size:22px;">Cheikh Distribution</h1>
-            <p style="color:#a9bbff;margin:4px 0 0;">Votre commande est confirmée</p>
+            <p style="color:#8899ff;margin:4px 0 0;">Votre commande est confirmée</p>
           </td>
         </tr>
 
@@ -92,7 +74,7 @@ function buildConfirmationHtml(order, email) {
             <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:24px;">
               <tr>
                 <td style="padding:8px 0;color:#555;">Numéro de commande</td>
-                <td style="padding:8px 0;font-weight:bold;color:#284bcc;text-align:right;">#${order.orderNumber}</td>
+                <td style="padding:8px 0;font-weight:bold;color:#001489;text-align:right;">#${order.orderNumber}</td>
               </tr>
               <tr>
                 <td style="padding:8px 0;color:#555;">Mode de paiement</td>
@@ -105,10 +87,10 @@ function buildConfirmationHtml(order, email) {
             </table>
 
             <!-- Items -->
-            <h3 style="border-bottom:2px solid #284bcc;padding-bottom:8px;color:#333;">Articles commandés</h3>
+            <h3 style="border-bottom:2px solid #001489;padding-bottom:8px;color:#333;">Articles commandés</h3>
             <table width="100%" cellpadding="0" cellspacing="0">
               <thead>
-                <tr style="background:#f8f9ff;">
+                <tr style="background:#f0f3ff;">
                   <th style="padding:8px;text-align:left;color:#555;font-size:13px;">Article</th>
                   <th style="padding:8px;text-align:center;color:#555;font-size:13px;">Qté</th>
                   <th style="padding:8px;text-align:right;color:#555;font-size:13px;">Prix unit.</th>
@@ -128,9 +110,9 @@ function buildConfirmationHtml(order, email) {
                 <td style="padding:8px;color:#555;">Livraison</td>
                 <td style="padding:8px;text-align:right;${order.deliveryFee === 0 ? 'color:#16a34a;font-weight:bold;' : ''}">${deliveryFeeText}</td>
               </tr>
-              <tr style="background:#f8f9ff;">
+              <tr style="background:#f0f3ff;">
                 <td style="padding:12px 8px;font-size:16px;font-weight:bold;color:#333;">Total</td>
-                <td style="padding:12px 8px;font-size:16px;font-weight:bold;color:#284bcc;text-align:right;">${formatXOF(order.total)}</td>
+                <td style="padding:12px 8px;font-size:16px;font-weight:bold;color:#001489;text-align:right;">${formatXOF(order.total)}</td>
               </tr>
             </table>
 
@@ -139,14 +121,14 @@ function buildConfirmationHtml(order, email) {
             </p>
             <p style="color:#888;font-size:13px;">
               Des questions ? Contactez-nous à l'adresse
-              <a href="mailto:support@cheikhdistribution.sn" style="color:#284bcc;">support@cheikhdistribution.sn</a>.
+              <a href="mailto:support@cheikhdistribution.sn" style="color:#001489;">support@cheikhdistribution.sn</a>.
             </p>
           </td>
         </tr>
 
         <!-- Footer -->
         <tr>
-          <td style="background:#f8f9ff;padding:16px 32px;text-align:center;">
+          <td style="background:#f0f3ff;padding:16px 32px;text-align:center;">
             <p style="color:#aaa;font-size:12px;margin:0;">
               © ${new Date().getFullYear()} Cheikh Distribution · Dakar, Sénégal
             </p>
@@ -160,64 +142,106 @@ function buildConfirmationHtml(order, email) {
 </html>`;
 }
 
+// ── Transport layer ────────────────────────────────────────────────────────
+
+/**
+ * Send an email using Resend HTTP API.
+ * Requires RESEND_API_KEY env var. From address must use a verified domain.
+ */
+async function sendViaResend(to, subject, html) {
+  const from = process.env.RESEND_FROM_ADDRESS ||
+    `Cheikh Distribution <onboarding@resend.dev>`; // fallback for domain-unverified accounts
+
+  const res = await fetch('https://api.resend.com/emails', {
+    method:  'POST',
+    headers: {
+      'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+      'Content-Type':  'application/json',
+    },
+    body: JSON.stringify({ from, to, subject, html }),
+  });
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => '');
+    throw new Error(`Resend API ${res.status}: ${body}`);
+  }
+}
+
+/**
+ * Send an email via SMTP (nodemailer). Used for local dev.
+ */
+async function sendViaSMTP(to, subject, html) {
+  const port = parseInt(process.env.EMAIL_PORT || '587', 10);
+  const transporter = nodemailer.createTransport({
+    host:       process.env.EMAIL_HOST,
+    port,
+    secure:     port === 465,
+    requireTLS: port !== 465,
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  await transporter.sendMail({
+    from:    `"Cheikh Distribution" <${process.env.EMAIL_USER}>`,
+    to,
+    subject,
+    html,
+  });
+}
+
+/**
+ * Core dispatcher — picks the right transport based on available env vars.
+ */
+async function sendMail(to, subject, html) {
+  if (process.env.RESEND_API_KEY) {
+    return sendViaResend(to, subject, html);
+  }
+  if (process.env.EMAIL_HOST && process.env.EMAIL_USER) {
+    return sendViaSMTP(to, subject, html);
+  }
+  // Dev/CI fallback — no SMTP config
+  console.log(`[emailService] No transport configured — simulating email:`);
+  console.log(`  To: ${to}`);
+  console.log(`  Subject: ${subject}`);
+}
+
+// ── Public API ─────────────────────────────────────────────────────────────
+
 /**
  * Send an order-confirmation email to the customer.
- *
- * Failures are caught and logged — they must never surface as HTTP errors
- * because the order has already been persisted successfully at this point.
- *
- * @param {object} order      — Populated order document (Mongoose or plain)
- * @param {string} userEmail  — Customer email address
+ * Failures are caught and logged — they must never surface as HTTP errors.
  */
 async function sendOrderConfirmation(order, userEmail) {
-  const transporter = createTransporter();
-
   const subject = `Confirmation de votre commande #${order.orderNumber} — Cheikh Distribution`;
-
-  if (!transporter) {
-    // Dev fallback: log to console when SMTP is not configured
-    console.log(`[emailService] SMTP non configuré — e-mail simulé :`);
-    console.log(`  To: ${userEmail}`);
-    console.log(`  Subject: ${subject}`);
-    console.log(`  Commande: #${order.orderNumber}  Total: ${formatXOF(order.total)}`);
-    return;
-  }
-
   try {
-    await transporter.sendMail({
-      from:    `"Cheikh Distribution" <${process.env.EMAIL_USER}>`,
-      to:      userEmail,
-      subject,
-      html:    buildConfirmationHtml(order, userEmail),
-    });
+    await sendMail(userEmail, subject, buildConfirmationHtml(order));
     console.log(`[emailService] Confirmation envoyée à ${userEmail}`);
   } catch (err) {
-    // Log but do not re-throw — email failure must not break order creation
     console.error(`[emailService] Erreur envoi email à ${userEmail}:`, err.message);
   }
 }
 
 /**
  * Send a password-reset link to the user.
- *
- * @param {string} email      — Recipient email address
- * @param {string} resetToken — Plain (un-hashed) reset token
+ * Re-throws on failure so the caller can surface the error.
  */
 async function sendPasswordResetEmail(email, resetToken) {
   const resetUrl = `${process.env.CLIENT_URL ?? 'http://localhost:3000'}/reset-password/${resetToken}`;
+  const subject  = 'Réinitialisation de votre mot de passe — Cheikh Distribution';
 
-  const subject = 'Réinitialisation de votre mot de passe — Cheikh Distribution';
   const html = `<!DOCTYPE html>
 <html lang="fr">
 <head><meta charset="UTF-8"></head>
 <body style="font-family:Arial,sans-serif;background:#f4f4f4;padding:24px;">
   <div style="max-width:520px;margin:auto;background:#fff;border-radius:8px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,.08);">
-    <h2 style="color:#284bcc;margin-top:0;">Réinitialisation de mot de passe</h2>
+    <h2 style="color:#001489;margin-top:0;">Réinitialisation de mot de passe</h2>
     <p>Vous recevez cet email car vous (ou quelqu'un d'autre) avez demandé à réinitialiser le mot de passe de votre compte.</p>
     <p>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe. Ce lien expirera dans <strong>10 minutes</strong>.</p>
     <div style="text-align:center;margin:32px 0;">
       <a href="${resetUrl}"
-         style="background:#284bcc;color:#fff;padding:14px 28px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">
+         style="background:#001489;color:#fff;padding:14px 28px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">
         Réinitialiser mon mot de passe
       </a>
     </div>
@@ -229,27 +253,12 @@ async function sendPasswordResetEmail(email, resetToken) {
 </body>
 </html>`;
 
-  const transporter = createTransporter();
-
-  if (!transporter) {
-    console.log(`[emailService] SMTP non configuré — e-mail simulé :`);
-    console.log(`  To: ${email}`);
-    console.log(`  Subject: ${subject}`);
-    console.log(`  Reset URL: ${resetUrl}`);
-    return;
-  }
-
   try {
-    await transporter.sendMail({
-      from:    `"Cheikh Distribution" <${process.env.EMAIL_USER}>`,
-      to:      email,
-      subject,
-      html,
-    });
+    await sendMail(email, subject, html);
     console.log(`[emailService] Email de réinitialisation envoyé à ${email}`);
   } catch (err) {
     console.error(`[emailService] Erreur envoi email à ${email}:`, err.message);
-    throw err; // Re-throw for password reset — caller needs to know if email failed
+    throw err; // Re-throw for password reset — caller needs to know
   }
 }
 
