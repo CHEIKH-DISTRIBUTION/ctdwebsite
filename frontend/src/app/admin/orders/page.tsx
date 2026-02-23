@@ -142,7 +142,8 @@ export default function AdminOrdersPage() {
         </div>
       ) : (
         <>
-          <div className="overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
+          {/* ── Desktop table (md+) ──────────────────────────────────────── */}
+          <div className="hidden md:block overflow-x-auto rounded-2xl border border-gray-200 bg-white shadow-sm">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-gray-100 bg-gray-50">
@@ -157,7 +158,6 @@ export default function AdminOrdersPage() {
               <tbody>
                 {orders.map((order) => (
                   <tr key={order._id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
-                    {/* Order number */}
                     <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-700">
                       <Link
                         href={`/admin/orders/${order._id}`}
@@ -167,31 +167,21 @@ export default function AdminOrdersPage() {
                         <Eye className="h-3 w-3 text-gray-300 group-hover:text-[#001489] transition-colors" />
                       </Link>
                     </td>
-
-                    {/* Client */}
                     <td className="px-4 py-3">
                       <p className="font-medium text-gray-800">{order.user?.name ?? '—'}</p>
                       <p className="text-xs text-gray-400">{order.user?.phone ?? ''}</p>
                     </td>
-
-                    {/* Total */}
                     <td className="px-4 py-3 text-right font-semibold text-[#F9461C]">
                       {order.total.toLocaleString('fr-FR')} FCFA
                     </td>
-
-                    {/* Status badge */}
                     <td className="px-4 py-3">
                       <Badge className={STATUS_COLORS[order.status]}>
                         {STATUS_LABELS[order.status]}
                       </Badge>
                     </td>
-
-                    {/* Date */}
                     <td className="px-4 py-3 text-gray-500 whitespace-nowrap">
                       {format(new Date(order.createdAt), 'dd/MM/yy HH:mm', { locale: fr })}
                     </td>
-
-                    {/* Status select */}
                     <td className="px-4 py-3">
                       <div className="relative">
                         {updatingId === order._id && (
@@ -200,9 +190,7 @@ export default function AdminOrdersPage() {
                         <select
                           value={order.status}
                           disabled={updatingId === order._id}
-                          onChange={(e) =>
-                            handleStatusChange(order._id, e.target.value as OrderStatus)
-                          }
+                          onChange={(e) => handleStatusChange(order._id, e.target.value as OrderStatus)}
                           className={`border rounded-lg py-1.5 text-xs bg-white cursor-pointer
                                      focus:outline-none focus:border-[#001489] transition-all
                                      disabled:opacity-50 disabled:cursor-not-allowed
@@ -218,6 +206,65 @@ export default function AdminOrdersPage() {
                 ))}
               </tbody>
             </table>
+          </div>
+
+          {/* ── Mobile cards (< md) ──────────────────────────────────────── */}
+          <div className="md:hidden space-y-3">
+            {orders.map((order) => (
+              <div key={order._id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+                {/* Top row: order number + date */}
+                <div className="flex items-center justify-between mb-3">
+                  <Link
+                    href={`/admin/orders/${order._id}`}
+                    className="font-mono text-xs font-semibold text-gray-700 hover:text-[#001489] transition-colors flex items-center gap-1 group"
+                  >
+                    {order.orderNumber}
+                    <Eye className="h-3 w-3 text-gray-300 group-hover:text-[#001489] transition-colors" />
+                  </Link>
+                  <span className="text-xs text-gray-400">
+                    {format(new Date(order.createdAt), 'dd/MM/yy HH:mm', { locale: fr })}
+                  </span>
+                </div>
+
+                {/* Client + total */}
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <p className="font-medium text-gray-800 text-sm">{order.user?.name ?? '—'}</p>
+                    {order.user?.phone && (
+                      <p className="text-xs text-gray-400 mt-0.5">{order.user.phone}</p>
+                    )}
+                  </div>
+                  <span className="font-semibold text-[#F9461C] text-sm">
+                    {order.total.toLocaleString('fr-FR')} FCFA
+                  </span>
+                </div>
+
+                {/* Status badge + select */}
+                <div className="flex items-center gap-2">
+                  <Badge className={`${STATUS_COLORS[order.status]} text-xs`}>
+                    {STATUS_LABELS[order.status]}
+                  </Badge>
+                  <div className="relative ml-auto">
+                    {updatingId === order._id && (
+                      <Loader2 className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 animate-spin text-gray-400" />
+                    )}
+                    <select
+                      value={order.status}
+                      disabled={updatingId === order._id}
+                      onChange={(e) => handleStatusChange(order._id, e.target.value as OrderStatus)}
+                      className={`border rounded-lg py-1.5 text-xs bg-white cursor-pointer
+                                 focus:outline-none focus:border-[#001489] transition-all
+                                 disabled:opacity-50 disabled:cursor-not-allowed
+                                 ${updatingId === order._id ? 'pl-7 pr-2' : 'px-2'}`}
+                    >
+                      {(Object.keys(STATUS_LABELS) as OrderStatus[]).map((s) => (
+                        <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
 
           {/* Pagination */}

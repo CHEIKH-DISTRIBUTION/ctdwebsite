@@ -340,7 +340,7 @@ export default function AdminPacksPage() {
           />
 
           {/* Slide-in panel */}
-          <div className="relative ml-auto w-full max-w-lg bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
+          <div className="relative ml-auto w-full sm:max-w-lg bg-white h-full overflow-y-auto shadow-2xl flex flex-col">
 
             {/* Panel header */}
             <div className="sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-white">
