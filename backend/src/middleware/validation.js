@@ -78,8 +78,8 @@ exports.validateProduct = (req, res, next) => {
       value: Joi.number().min(0),
       unit: Joi.string().valid('kg', 'g', 'l', 'ml')
     }).optional(),
-    isActive: Joi.boolean().truthy(['true', '1']).falsy(['false', '0']).optional(),
-    isFeatured: Joi.boolean().truthy(['true', '1']).falsy(['false', '0']).optional(),
+    isActive: Joi.boolean().truthy('true', '1').falsy('false', '0').optional(),
+    isFeatured: Joi.boolean().truthy('true', '1').falsy('false', '0').optional(),
     tags: Joi.array().items(Joi.string()).single().optional(),
     seoTitle: Joi.string().optional(),
     seoDescription: Joi.string().optional()
