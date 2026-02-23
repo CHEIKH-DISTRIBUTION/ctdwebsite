@@ -1,6 +1,5 @@
-const Product = require('../models/Product');
-const path = require('path');
-const fs = require('fs');
+const Product    = require('../models/Product');
+const { cloudinary } = require('../middleware/upload');
 
 // @desc    Obtenir tous les produits
 // @route   GET /api/products
@@ -136,12 +135,13 @@ exports.createProduct = async (req, res) => {
       createdBy: req.user.id
     };
 
-    // Traiter les images uploadées
+    // Traiter les images uploadées (Cloudinary — file.path = URL, file.filename = public_id)
     if (req.files && req.files.length > 0) {
       productData.images = req.files.map((file, index) => ({
-        url: `/uploads/products/${file.filename}`,
-        alt: `${req.body.name} - Image ${index + 1}`,
-        isPrimary: index === 0
+        url:       file.path,
+        publicId:  file.filename,
+        alt:       `${req.body.name} - Image ${index + 1}`,
+        isPrimary: index === 0,
       }));
     }
 
@@ -154,14 +154,14 @@ exports.createProduct = async (req, res) => {
     });
   } catch (error) {
     console.error('Erreur création produit:', error);
-    
-    // Supprimer les fichiers uploadés en cas d'erreur
-    if (req.files) {
-      req.files.forEach(file => {
-        fs.unlink(file.path, (err) => {
-          if (err) console.error('Erreur suppression fichier:', err);
-        });
-      });
+
+    // Supprimer les images Cloudinary uploadées en cas d'erreur de création
+    if (req.files && req.files.length > 0) {
+      await Promise.all(
+        req.files.map((file) =>
+          cloudinary.uploader.destroy(file.filename).catch(() => {})
+        )
+      );
     }
 
     if (error.code === 11000) {
@@ -194,21 +194,21 @@ exports.updateProduct = async (req, res) => {
 
     // Traiter les nouvelles images
     if (req.files && req.files.length > 0) {
-      // Supprimer les anciennes images
+      // Supprimer les anciennes images de Cloudinary
       if (product.images && product.images.length > 0) {
-        product.images.forEach(image => {
-          const imagePath = path.join(__dirname, '..', image.url);
-          fs.unlink(imagePath, (err) => {
-            if (err) console.error('Erreur suppression ancienne image:', err);
-          });
-        });
+        await Promise.all(
+          product.images
+            .filter((img) => img.publicId)
+            .map((img) => cloudinary.uploader.destroy(img.publicId).catch(() => {}))
+        );
       }
 
       // Ajouter les nouvelles images
       req.body.images = req.files.map((file, index) => ({
-        url: `/uploads/products/${file.filename}`,
-        alt: `${req.body.name || product.name} - Image ${index + 1}`,
-        isPrimary: index === 0
+        url:       file.path,
+        publicId:  file.filename,
+        alt:       `${req.body.name || product.name} - Image ${index + 1}`,
+        isPrimary: index === 0,
       }));
     }
 
@@ -249,14 +249,13 @@ exports.deleteProduct = async (req, res) => {
       });
     }
 
-    // Supprimer les images associées
+    // Supprimer les images de Cloudinary
     if (product.images && product.images.length > 0) {
-      product.images.forEach(image => {
-        const imagePath = path.join(__dirname, '..', image.url);
-        fs.unlink(imagePath, (err) => {
-          if (err) console.error('Erreur suppression image:', err);
-        });
-      });
+      await Promise.all(
+        product.images
+          .filter((img) => img.publicId)
+          .map((img) => cloudinary.uploader.destroy(img.publicId).catch(() => {}))
+      );
     }
 
     await Product.findByIdAndDelete(req.params.id);

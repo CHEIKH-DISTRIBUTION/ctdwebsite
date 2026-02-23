@@ -25,9 +25,10 @@ const productSchema = new mongoose.Schema({
     enum: ['Alimentaire', 'Hygiène', 'Électroménager', 'Vêtements']
   },
   images: [{
-    url: { type: String, required: true },
-    alt: String,
-    isPrimary: { type: Boolean, default: false }
+    url:      { type: String, required: true },
+    publicId: { type: String },               // Cloudinary public_id (used for deletion)
+    alt:      String,
+    isPrimary: { type: Boolean, default: false },
   }],
   stock: {
     type: Number,
