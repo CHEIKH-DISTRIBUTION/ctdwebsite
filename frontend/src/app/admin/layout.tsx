@@ -222,7 +222,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="flex min-h-screen" style={{ background: '#F5F7FA' }}>
 
       {/* ----------------------------------------------------------------- */}
-      {/* Desktop sidebar — collapsible                                       */}
+      {/* Desktop sidebar — in-flow sticky (no margin hacks)                  */}
       {/* ----------------------------------------------------------------- */}
       <AnimatePresence initial={false}>
         {desktopOpen && (
@@ -232,10 +232,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             animate={{ width: SIDEBAR_W, opacity: 1 }}
             exit={{ width: 0, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-            className="hidden lg:flex flex-col fixed inset-y-0 left-0 z-30 overflow-hidden"
+            className="hidden lg:flex flex-col flex-shrink-0 sticky top-0 h-screen overflow-hidden z-30"
             style={{ background: SIDEBAR_BG }}
           >
-            <div style={{ width: SIDEBAR_W, minWidth: SIDEBAR_W }}>
+            <div style={{ width: SIDEBAR_W, minWidth: SIDEBAR_W }} className="h-full">
               <SidebarContent
                 pathname={pathname}
                 onCollapse={() => setDesktopOpen(false)}
@@ -246,7 +246,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </AnimatePresence>
 
       {/* ----------------------------------------------------------------- */}
-      {/* Mobile sidebar — slide-in drawer                                   */}
+      {/* Mobile sidebar — slide-in overlay                                  */}
       {/* ----------------------------------------------------------------- */}
       <AnimatePresence>
         {mobileOpen && (
@@ -285,14 +285,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </AnimatePresence>
 
       {/* ----------------------------------------------------------------- */}
-      {/* Main area                                                           */}
+      {/* Main area — flex-1, no margin needed                               */}
       {/* ----------------------------------------------------------------- */}
-      <motion.div
-        className="flex flex-col flex-1 min-w-0"
-        animate={{ marginLeft: desktopOpen ? SIDEBAR_W : 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-        style={{ marginLeft: desktopOpen ? SIDEBAR_W : 0 }}
-      >
+      <div className="flex flex-col flex-1 min-w-0">
         {/* Topbar */}
         <header className="sticky top-0 z-20 flex items-center h-16 px-4 lg:px-6 bg-white border-b border-gray-200 shadow-sm gap-3">
 
@@ -338,10 +333,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-6">
+        <main className="flex-1 p-4 lg:p-6">
           {children}
         </main>
-      </motion.div>
+      </div>
     </div>
   );
 }
