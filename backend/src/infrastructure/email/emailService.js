@@ -17,10 +17,12 @@ function createTransporter() {
     return null; // SMTP not configured
   }
 
+  const port = parseInt(process.env.EMAIL_PORT || '587', 10);
   return nodemailer.createTransport({
-    host:   process.env.EMAIL_HOST,
-    port:   parseInt(process.env.EMAIL_PORT || '587', 10),
-    secure: process.env.EMAIL_PORT === '465',
+    host:       process.env.EMAIL_HOST,
+    port,
+    secure:     port === 465,
+    requireTLS: port !== 465, // STARTTLS required for port 587 (Gmail)
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
