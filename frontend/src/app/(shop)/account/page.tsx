@@ -177,16 +177,16 @@ export default function AccountPage() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="flex items-center justify-between"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-3"
           >
             <div>
-              <h1 className="text-3xl font-bold text-gray-800">Mon compte</h1>
-              <p className="text-gray-600">Gérez vos informations personnelles et préférences</p>
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-800">Mon compte</h1>
+              <p className="text-sm sm:text-base text-gray-600">Gérez vos informations personnelles et préférences</p>
             </div>
             <Button
               variant="outline"
               onClick={logout}
-              className="text-[#f9461c] hover:text-[#d93a14] hover:bg-[#f9461c]/10 rounded-xl transition-all border-[#f9461c]"
+              className="self-start sm:self-auto text-[#f9461c] hover:text-[#d93a14] hover:bg-[#f9461c]/10 rounded-xl transition-all border-[#f9461c]"
             >
               <LogOut className="h-4 w-4 mr-2" />
               Déconnexion
@@ -435,7 +435,7 @@ export default function AccountPage() {
                               <motion.div
                                 key={order._id}
                                 whileHover={{ scale: 1.01 }}
-                                className="flex items-center justify-between p-6 border border-gray-200 rounded-2xl hover:shadow-md transition-all"
+                                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 sm:p-6 border border-gray-200 rounded-2xl hover:shadow-md transition-all"
                               >
                                 <div className="flex items-center gap-4">
                                   <div className="w-14 h-14 bg-gradient-to-br from-blue-100 to-blue-50 rounded-xl flex items-center justify-center">
@@ -459,8 +459,8 @@ export default function AccountPage() {
                                     </p>
                                   </div>
                                 </div>
-                                <div className="text-right">
-                                  <p className="font-bold text-lg" style={{ color: COLORS.primary }}>
+                                <div className="flex sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 sm:gap-0 sm:text-right">
+                                  <p className="font-bold text-base sm:text-lg" style={{ color: COLORS.primary }}>
                                     {order.total.toLocaleString('fr-FR')} FCFA
                                   </p>
                                   <Button asChild variant="ghost" size="sm" className="text-gray-600 hover:text-[#284bcc]">
@@ -531,32 +531,32 @@ export default function AccountPage() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <div className="flex items-center justify-between gap-3 p-4 border border-gray-200 rounded-xl">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 flex-shrink-0 bg-blue-100 rounded-lg flex items-center justify-center">
                             <Bell className="h-5 w-5" style={{ color: COLORS.primary }} />
                           </div>
-                          <div>
-                            <p className="font-medium text-gray-800">Emails promotionnels</p>
-                            <p className="text-sm text-gray-600">Offres spéciales et nouveautés</p>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-800 text-sm sm:text-base">Emails promotionnels</p>
+                            <p className="text-xs sm:text-sm text-gray-600">Offres spéciales et nouveautés</p>
                           </div>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                           <input aria-label="emails-promo" type="checkbox" className="sr-only peer" defaultChecked />
                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                         </label>
                       </div>
-                      <div className="flex items-center justify-between p-4 border border-gray-200 rounded-xl">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                      <div className="flex items-center justify-between gap-3 p-4 border border-gray-200 rounded-xl">
+                        <div className="flex items-center gap-3 min-w-0">
+                          <div className="w-10 h-10 flex-shrink-0 bg-green-100 rounded-lg flex items-center justify-center">
                             <Shield className="h-5 w-5 text-green-600" />
                           </div>
-                          <div>
-                            <p className="font-medium text-gray-800">Notifications de sécurité</p>
-                            <p className="text-sm text-gray-600">Alertes importantes de compte</p>
+                          <div className="min-w-0">
+                            <p className="font-medium text-gray-800 text-sm sm:text-base">Notifications de sécurité</p>
+                            <p className="text-xs sm:text-sm text-gray-600">Alertes importantes de compte</p>
                           </div>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer">
+                        <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
                           <input aria-label="notifs-securite" type="checkbox" className="sr-only peer" defaultChecked />
                           <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
                         </label>

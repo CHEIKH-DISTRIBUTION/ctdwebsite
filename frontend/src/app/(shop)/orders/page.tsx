@@ -180,7 +180,7 @@ export default function OrdersPage() {
 
             {/* Pagination */}
             {pagination && pagination.pages > 1 && (
-              <div className="flex justify-center items-center gap-2 mt-8">
+              <div className="flex flex-wrap justify-center items-center gap-2 mt-8">
                 <Button
                   onClick={() => setPage((p) => Math.max(p - 1, 1))}
                   disabled={page === 1}

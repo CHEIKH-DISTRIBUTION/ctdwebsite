@@ -186,22 +186,22 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
             {order.items.map((item, i) => {
               const imageUrl = item.product?.images?.[0]?.url ?? '/images/placeholder.jpg';
               return (
-                <div key={i} className="flex gap-4 items-center">
+                <div key={i} className="flex items-center gap-3">
                   {item.product && (
                     <img
                       src={imageUrl}
                       alt={item.name}
-                      className="w-16 h-16 object-cover rounded"
+                      className="w-14 h-14 sm:w-16 sm:h-16 flex-shrink-0 object-cover rounded"
                       onError={(e) => { (e.target as HTMLImageElement).src = '/images/placeholder.jpg'; }}
                     />
                   )}
-                  <div className="flex-1">
-                    <h3 className="font-medium">{item.name}</h3>
-                    <p className="text-sm text-gray-600">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-medium text-sm sm:text-base truncate">{item.name}</h3>
+                    <p className="text-xs sm:text-sm text-gray-600">
                       {item.quantity} × {item.price.toLocaleString()} FCFA
                     </p>
                   </div>
-                  <p className="font-bold">{item.total.toLocaleString()} FCFA</p>
+                  <p className="font-bold text-sm sm:text-base flex-shrink-0">{item.total.toLocaleString()} FCFA</p>
                 </div>
               );
             })}
@@ -209,9 +209,9 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         </section>
 
         {/* Summary */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-8 mb-8">
           {/* Delivery address */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
             <h2 className="text-lg font-semibold mb-4">Adresse de livraison</h2>
             <p>{order.deliveryAddress.street}</p>
             <p>
@@ -224,7 +224,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           </div>
 
           {/* Payment */}
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
+          <div className="bg-white p-4 sm:p-6 rounded-lg shadow-sm border">
             <h2 className="text-lg font-semibold mb-4">Paiement</h2>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">

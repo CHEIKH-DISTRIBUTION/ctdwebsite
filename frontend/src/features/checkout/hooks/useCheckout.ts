@@ -34,7 +34,7 @@ export function useCheckout() {
   const { items, packItems, clearCart } = useCartStore();
   const { user } = useAuthStore();
 
-  const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('wave');
+  const [paymentMethod, setPaymentMethod] = useState<CheckoutPaymentMethod>('cash');
   const [customerNote, setCustomerNote] = useState('');
   const [isAgreedToTerms, setIsAgreedToTerms] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
