@@ -253,28 +253,28 @@ export default function AccountPage() {
                     className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#284bcc] transition-all"
                   >
                     <User className="h-4 w-4" />
-                    Profil
+                    <span className="hidden sm:inline">Profil</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="orders"
                     className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#284bcc] transition-all"
                   >
                     <ShoppingBag className="h-4 w-4" />
-                    Commandes
+                    <span className="hidden sm:inline">Commandes</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="wishlist"
                     className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#284bcc] transition-all"
                   >
                     <Heart className="h-4 w-4" />
-                    Favoris
+                    <span className="hidden sm:inline">Favoris</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="settings"
                     className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#284bcc] transition-all"
                   >
                     <Settings className="h-4 w-4" />
-                    Paramètres
+                    <span className="hidden sm:inline">Paramètres</span>
                   </TabsTrigger>
                 </TabsList>
 

@@ -114,7 +114,6 @@ export function useCheckout() {
       };
 
       const result = await checkoutApi.createOrder(command);
-      clearCart();
 
       // ── Mobile money — initiate payment gateway and redirect ──────────────
       if (paymentMethod === 'wave' || paymentMethod === 'orange_money') {
@@ -134,10 +133,12 @@ export function useCheckout() {
             method:    paymentMethod,
             ...(paymentData.nextAction ? { paymentUrl: paymentData.nextAction } : {}),
           });
+          clearCart();
           router.push(`/payment/pending?${pendingUrl.toString()}`);
         } catch {
           // Gateway call failed — order is created, user can pay later
           toast.error("Le paiement n'a pas pu être initié. Retrouvez votre commande dans votre espace.");
+          clearCart();
           router.push(`/orders/${result.order._id}?confirmed=1`);
         }
         return;
@@ -148,6 +149,7 @@ export function useCheckout() {
         description: `Référence : ${result.order.orderNumber}`,
         duration: 4000,
       });
+      clearCart();
       router.push(`/orders/${result.order._id}?confirmed=1`);
     } catch (error) {
       if (error instanceof ApiError) {
