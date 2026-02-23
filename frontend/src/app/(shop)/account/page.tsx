@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
+import { isValidSenegalPhone } from '@/shared/utils/phone';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -63,6 +65,7 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function AccountPage() {
   const { user, logout, fetchProfile } = useAuthStore();
+  const router = useRouter();
 
   const [isEditing, setIsEditing]   = useState(false);
   const [isSaving, setIsSaving]     = useState(false);
@@ -142,6 +145,10 @@ export default function AccountPage() {
     : new Date().getFullYear();
 
   const handleSave = async () => {
+    if (userData.phone && !isValidSenegalPhone(userData.phone)) {
+      setSaveError('Numéro de téléphone invalide. Entrez un numéro sénégalais (ex: 77 123 45 67).');
+      return;
+    }
     setIsSaving(true);
     setSaveError(null);
     try {
@@ -169,6 +176,11 @@ export default function AccountPage() {
     });
   };
 
+  const handleLogout = () => {
+    logout();
+    router.push('/');
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
       {/* Header */}
@@ -185,7 +197,7 @@ export default function AccountPage() {
             </div>
             <Button
               variant="outline"
-              onClick={logout}
+              onClick={handleLogout}
               className="self-start sm:self-auto text-[#f9461c] hover:text-[#d93a14] hover:bg-[#f9461c]/10 rounded-xl transition-all border-[#f9461c]"
             >
               <LogOut className="h-4 w-4 mr-2" />
@@ -282,22 +294,22 @@ export default function AccountPage() {
                 <TabsContent value="profile">
                   <Card className="border-gray-200 shadow-lg rounded-2xl">
                     <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-gray-800 flex items-center gap-2">
-                          <User className="h-5 w-5" style={{ color: COLORS.primary }} />
+                      <div className="flex flex-wrap items-start gap-3">
+                        <CardTitle className="text-gray-800 flex items-center gap-2 flex-1 min-w-0">
+                          <User className="h-5 w-5 flex-shrink-0" style={{ color: COLORS.primary }} />
                           Informations personnelles
                         </CardTitle>
                         {!isEditing ? (
                           <Button
                             variant="outline"
                             onClick={() => setIsEditing(true)}
-                            className="flex items-center gap-2 rounded-xl border-[#284bcc] text-[#284bcc] hover:bg-[#284bcc]/10 transition-all"
+                            className="flex items-center gap-2 rounded-xl border-[#284bcc] text-[#284bcc] hover:bg-[#284bcc]/10 transition-all flex-shrink-0"
                           >
                             <Edit3 className="h-4 w-4" />
                             Modifier
                           </Button>
                         ) : (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-shrink-0">
                             <Button
                               variant="outline"
                               onClick={handleCancelEdit}

@@ -3,6 +3,7 @@ const Order = require('../models/Order');
 const Product = require('../models/Product');
 const Pack = require('../models/Pack');
 const User = require('../models/User');
+const emailService = require('../infrastructure/email/emailService');
 
 // @desc    Créer une commande (produits et/ou packs)
 // @route   POST /api/orders
@@ -366,6 +367,14 @@ exports.updateOrderStatus = async (req, res) => {
 
     await order.save();
 
+    // Send confirmation email (fire-and-forget)
+    if (status === 'confirmed') {
+      const userEmail = order.contactInfo?.email;
+      if (userEmail) {
+        emailService.sendOrderConfirmation(order, userEmail).catch(() => {});
+      }
+    }
+
     res.status(200).json({
       success: true,
       message: 'Statut de la commande mis à jour',
@@ -611,5 +620,43 @@ exports.getAllOrders = async (req, res) => {
       success: false,
       message: 'Erreur serveur'
     });
+  }
+};
+// @desc    Changer la méthode de paiement d'une commande (si paiement encore en attente)
+// @route   PUT /api/orders/:id/payment-method
+// @access  Private
+exports.changePaymentMethod = async (req, res) => {
+  try {
+    const { paymentMethod } = req.body;
+    const allowed = ['wave', 'orange_money', 'cash', 'bank_transfer'];
+    if (!allowed.includes(paymentMethod)) {
+      return res.status(400).json({ success: false, message: 'Méthode de paiement invalide' });
+    }
+
+    const order = await Order.findById(req.params.id)
+      .populate('items.product', 'name price images')
+      .populate('user', 'name email phone')
+      .populate('deliveryPerson', 'name phone');
+
+    if (!order) {
+      return res.status(404).json({ success: false, message: 'Commande non trouvée' });
+    }
+
+    if (order.user._id.toString() !== req.user.id) {
+      return res.status(403).json({ success: false, message: 'Accès non autorisé' });
+    }
+
+    if (!['pending', 'failed'].includes(order.paymentStatus)) {
+      return res.status(400).json({ success: false, message: 'Le paiement a déjà été traité' });
+    }
+
+    order.paymentMethod = paymentMethod;
+    order.paymentStatus = 'pending';
+    await order.save();
+
+    res.status(200).json({ success: true, data: { order } });
+  } catch (error) {
+    console.error('Erreur changement méthode paiement:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
