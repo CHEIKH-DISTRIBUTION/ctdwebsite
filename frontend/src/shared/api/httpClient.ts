@@ -2,7 +2,7 @@
  * httpClient — single HTTP client for the entire frontend.
  *
  * Token refresh strategy:
- *   - Access tokens are short-lived (15 min).
+ *   - Access tokens expire after 30 days (JWT_EXPIRE).
  *   - On 401, the client transparently calls POST /api/auth/refresh
  *     (the browser sends the httpOnly refresh-token cookie automatically).
  *   - If refresh succeeds → retry original request with new token.
