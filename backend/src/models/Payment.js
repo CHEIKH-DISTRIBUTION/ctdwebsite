@@ -28,8 +28,9 @@ const paymentSchema = new mongoose.Schema({
     default: 'pending'
   },
   transactionId: {
-    type: String,
-    unique: true
+    type:   String,
+    unique: true,
+    sparse: true, // autorise plusieurs documents sans transactionId (null)
   },
   paymentDetails: {
     // Champs communs

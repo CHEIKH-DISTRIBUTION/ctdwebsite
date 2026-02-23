@@ -116,7 +116,6 @@ exports.initiatePayment = asyncHandler(async (req, res, next) => {
 
     // Mettre à jour le statut de la commande
     order.paymentStatus = payment.status;
-    order.paymentMethod = paymentMethod;
     await order.save();
 
     res.status(200).json({

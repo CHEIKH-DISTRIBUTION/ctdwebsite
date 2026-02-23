@@ -93,7 +93,10 @@ orderSchema.index({ status: 1 });
 orderSchema.index({ paymentStatus: 1 });
 // orderNumber a déjà unique:true → index créé automatiquement, pas besoin de schema.index()
 
-orderSchema.pre('save', async function (next) {
+// In Mongoose 8+, pre('save') runs AFTER built-in validation.
+// orderNumber is required, so we must generate it in pre('validate')
+// so it is present when Mongoose checks required fields.
+orderSchema.pre('validate', async function (next) {
   if (!this.orderNumber) {
     const now = this.createdAt || new Date();
     const year = now.getFullYear().toString().slice(-2);
