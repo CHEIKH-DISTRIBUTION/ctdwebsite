@@ -227,18 +227,20 @@ export default function HomePage() {
   const [featuredPacks,    setFeaturedPacks]    = useState<PackResponse[]>([]);
   const [productsLoading,  setProductsLoading]  = useState(true);
   const [packsLoading,     setPacksLoading]     = useState(true);
+  const [productsError,    setProductsError]    = useState(false);
+  const [packsError,       setPacksError]       = useState(false);
 
   useEffect(() => {
     catalogApi.getProducts({ featured: true, limit: 4, inStock: true })
-      .then((res) => setFeaturedProducts(res.products))
-      .catch(() => {})
+      .then((res) => { setFeaturedProducts(res.products); setProductsError(false); })
+      .catch(() => setProductsError(true))
       .finally(() => setProductsLoading(false));
   }, []);
 
   useEffect(() => {
     catalogApi.getPacks({ featured: true })
-      .then(setFeaturedPacks)
-      .catch(() => {})
+      .then((res) => { setFeaturedPacks(res); setPacksError(false); })
+      .catch(() => setPacksError(true))
       .finally(() => setPacksLoading(false));
   }, []);
 
@@ -375,6 +377,16 @@ export default function HomePage() {
           >
             {productsLoading
               ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)
+              : productsError
+                ? (
+                  <div className="col-span-2 lg:col-span-4 text-center py-12">
+                    <Package className="h-12 w-12 mx-auto mb-3 text-red-200" />
+                    <p className="text-gray-500 mb-3">Impossible de charger les produits.</p>
+                    <Button size="sm" variant="outline" className="rounded-xl" onClick={() => window.location.reload()}>
+                      Réessayer
+                    </Button>
+                  </div>
+                )
               : featuredProducts.length > 0
                 ? featuredProducts.map((p, i) => <ProductCard key={p._id} product={p} index={i} />)
                 : (
@@ -389,7 +401,7 @@ export default function HomePage() {
       </section>
 
       {/* ── Packs en vedette ── */}
-      {(packsLoading || featuredPacks.length > 0) && (
+      {(packsLoading || packsError || featuredPacks.length > 0) && (
         <section className="py-20 bg-gray-50">
           <div className="container mx-auto px-4">
             <motion.div
@@ -419,7 +431,17 @@ export default function HomePage() {
             >
               {packsLoading
                 ? Array.from({ length: 3 }).map((_, i) => <PackCardSkeleton key={i} />)
-                : featuredPacks.map((p, i) => <PackCard key={p._id} pack={p} index={i} />)
+                : packsError
+                  ? (
+                    <div className="col-span-1 md:col-span-2 lg:col-span-3 text-center py-12">
+                      <Package className="h-12 w-12 mx-auto mb-3 text-red-200" />
+                      <p className="text-gray-500 mb-3">Impossible de charger les packs.</p>
+                      <Button size="sm" variant="outline" className="rounded-xl" onClick={() => window.location.reload()}>
+                        Réessayer
+                      </Button>
+                    </div>
+                  )
+                  : featuredPacks.map((p, i) => <PackCard key={p._id} pack={p} index={i} />)
               }
             </motion.div>
 

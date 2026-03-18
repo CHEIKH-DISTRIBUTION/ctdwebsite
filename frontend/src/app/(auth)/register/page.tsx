@@ -27,10 +27,10 @@ import {
 
 // Couleurs de la palette
 const COLORS = {
-  primary: '#284bcc',    // Pantone Blue Reflex C
-  secondary: '#f9461c',  // Pantone 711C
-  accent: '#f6c700',     // Pantone 1235C
-  dark: '#1d3aa3',
+  primary: '#001489',    // Pantone Reflex Blue C
+  secondary: '#F9461C',  // Pantone 711C
+  accent: '#FFB500',     // Pantone 1235C
+  dark: '#001070',
   light: '#a9bbff'
 };
 

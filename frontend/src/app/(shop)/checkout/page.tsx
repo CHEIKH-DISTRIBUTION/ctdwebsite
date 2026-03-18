@@ -252,17 +252,19 @@ export default function CheckoutPage() {
                 <input
                   type="text"
                   placeholder="Rue / Quartier *"
+                  required
                   value={deliveryAddress.street}
                   onChange={(e) => setDeliveryAddress({ ...deliveryAddress, street: e.target.value })}
-                  className={inputCls}
+                  className={inputCls + (!deliveryAddress.street.trim() && isSubmitting ? ' !border-red-400 !ring-red-100' : '')}
                 />
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input
                     type="text"
                     placeholder="Ville *"
+                    required
                     value={deliveryAddress.city}
                     onChange={(e) => setDeliveryAddress({ ...deliveryAddress, city: e.target.value })}
-                    className={inputCls}
+                    className={inputCls + (!deliveryAddress.city.trim() && isSubmitting ? ' !border-red-400 !ring-red-100' : '')}
                   />
                   <input
                     type="text"
