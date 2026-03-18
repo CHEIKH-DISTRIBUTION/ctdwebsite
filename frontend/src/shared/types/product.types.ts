@@ -23,6 +23,14 @@ export type ProductDimensions = {
   unit: 'cm' | 'm';
 };
 
+export type ProductReview = {
+  _id: string;
+  user: { _id: string; name: string };
+  rating: number;
+  comment?: string;
+  createdAt: string;
+};
+
 export type ProductResponse = {
   _id: string;
   name: string;
@@ -40,6 +48,7 @@ export type ProductResponse = {
   isFeatured: boolean;
   tags: string[];
   rating: { average: number; count: number };
+  reviews?: ProductReview[];
   createdAt: string;
   updatedAt: string;
 };

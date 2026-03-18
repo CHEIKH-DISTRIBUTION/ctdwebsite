@@ -6,7 +6,7 @@ import { useOrder } from '@/features/orders/hooks/useOrder';
 import { OrderStatusBadge } from '@/features/orders/components/OrderStatusBadge';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { StarIcon, Loader2, AlertCircle, CheckCircle2, Package, CreditCard } from 'lucide-react';
+import { StarIcon, Loader2, AlertCircle, CheckCircle2, Package, CreditCard, ChevronRight } from 'lucide-react';
 import { useState, useEffect, use, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useRouter } from 'next/navigation';
@@ -182,6 +182,15 @@ export default function OrderDetailPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
+
+        {/* Breadcrumb */}
+        <nav className="flex items-center gap-1.5 text-sm text-gray-500 mb-6">
+          <Link href="/" className="hover:text-gray-800 transition-colors">Accueil</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <Link href="/orders" className="hover:text-gray-800 transition-colors">Mes commandes</Link>
+          <ChevronRight className="h-3.5 w-3.5" />
+          <span className="text-gray-800 font-medium">#{order.orderNumber}</span>
+        </nav>
 
         {/* ── Post-checkout confirmation banner ── */}
         <Suspense>

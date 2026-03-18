@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Truck, Shield, RotateCcw, Star, Heart, Share2, Check, Plus, Minus,
   ArrowLeft, ShoppingCart, Zap, Package, Users, Award, ChevronRight, Loader2,
+  MessageSquare, ChevronRight as BreadcrumbSep,
 } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -115,18 +116,20 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
-      {/* Nav */}
+      {/* Breadcrumb + actions */}
       <div className="bg-white shadow-sm border-b border-gray-200">
         <div className="container mx-auto px-4 py-4 flex items-center gap-4">
-          <Link href="/products" className="flex items-center text-gray-600 hover:text-gray-800 transition-colors group">
-            <ArrowLeft className="h-5 w-5 mr-2 group-hover:-translate-x-1 transition-transform" />
-            Retour au catalogue
-          </Link>
-          <div className="flex-1" />
-          <button onClick={toggleLike} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+          <nav className="flex items-center gap-1.5 text-sm text-gray-500 min-w-0 flex-1">
+            <Link href="/" className="hover:text-gray-800 transition-colors flex-shrink-0">Accueil</Link>
+            <BreadcrumbSep className="h-3.5 w-3.5 flex-shrink-0" />
+            <Link href="/products" className="hover:text-gray-800 transition-colors flex-shrink-0">Produits</Link>
+            <BreadcrumbSep className="h-3.5 w-3.5 flex-shrink-0" />
+            <span className="text-gray-800 font-medium truncate">{product.name}</span>
+          </nav>
+          <button onClick={toggleLike} className="p-2 rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0">
             <Heart className={`h-6 w-6 transition-colors ${liked ? 'text-red-500 fill-red-500' : 'text-gray-400'}`} />
           </button>
-          <button onClick={shareProduct} className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
+          <button onClick={shareProduct} className="p-2 rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0">
             <Share2 className="h-6 w-6 text-gray-400" />
           </button>
         </div>
@@ -317,6 +320,7 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
             {[
               { id: 'description', label: 'Description', icon: Package },
               { id: 'specifications', label: 'Spécifications', icon: Zap },
+              { id: 'reviews', label: `Avis (${product.rating.count})`, icon: MessageSquare },
             ].map((tab) => (
               <button key={tab.id} onClick={() => setActiveTab(tab.id)}
                 className={`py-4 px-2 font-medium text-sm border-b-2 transition-all flex items-center gap-2 ${
@@ -385,6 +389,47 @@ export default function ProductDetailPage({ params }: { params: Promise<{ id: st
                       </div>
                     )}
                   </div>
+                </motion.div>
+              )}
+              {activeTab === 'reviews' && (
+                <motion.div key="reviews" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  {(!product.reviews || product.reviews.length === 0) ? (
+                    <div className="text-center py-10">
+                      <MessageSquare className="h-12 w-12 text-gray-200 mx-auto mb-3" />
+                      <p className="text-gray-500 mb-1">Aucun avis pour ce produit.</p>
+                      <p className="text-sm text-gray-400">Soyez le premier à donner votre avis !</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {product.reviews.map((review) => (
+                        <div key={review._id} className="p-4 bg-gray-50 rounded-xl">
+                          <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                              <div className="w-9 h-9 bg-[#001489] rounded-full flex items-center justify-center text-white text-sm font-bold">
+                                {(typeof review.user === 'object' ? review.user.name : 'U').charAt(0).toUpperCase()}
+                              </div>
+                              <div>
+                                <p className="font-medium text-gray-800 text-sm">
+                                  {typeof review.user === 'object' ? review.user.name : 'Utilisateur'}
+                                </p>
+                                <p className="text-xs text-gray-400">
+                                  {new Date(review.createdAt).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center">
+                              {[...Array(5)].map((_, i) => (
+                                <Star key={i} className={`h-4 w-4 ${i < review.rating ? 'text-[#FFB500] fill-current' : 'text-gray-300'}`} />
+                              ))}
+                            </div>
+                          </div>
+                          {review.comment && (
+                            <p className="text-sm text-gray-600 leading-relaxed">{review.comment}</p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </motion.div>
               )}
             </AnimatePresence>
