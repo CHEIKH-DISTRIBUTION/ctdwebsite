@@ -6,20 +6,18 @@ import "../globals.css";
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
-  Truck,
-  Shield,
   Star,
   ArrowRight,
   ChevronDown,
   Zap,
   Users,
-  Clock,
   ShoppingBag,
   Heart,
   Award,
   Sparkles,
   Package,
   Tag,
+  Truck,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
@@ -68,18 +66,11 @@ const textVariant = (delay: number): Variants => ({
 // Static data
 // ---------------------------------------------------------------------------
 
-const features = [
-  { icon: <Truck className="h-8 w-8" />,  title: 'Livraison Express',  description: 'Sous 24h à Dakar et partout au Sénégal' },
-  { icon: <Shield className="h-8 w-8" />, title: 'Paiement Sécurisé',  description: 'Wave, Orange Money, Cartes bancaires' },
-  { icon: <Star className="h-8 w-8" />,   title: 'Qualité Garantie',   description: 'Produits soigneusement sélectionnés' },
-  { icon: <Clock className="h-8 w-8" />,  title: 'Support 7j/7',       description: 'Disponible du lundi au dimanche' },
-];
-
 const categories = [
-  { name: 'Alimentaires',  icon: <ShoppingBag className="h-10 w-10" />, color: 'from-blue-500 to-blue-600',   href: '/products?category=Alimentaire' },
-  { name: 'Électroménager', icon: <Zap className="h-10 w-10" />,         color: 'from-orange-500 to-orange-600', href: '/products?category=Électroménager' },
-  { name: 'Hygiène',       icon: <Sparkles className="h-10 w-10" />,    color: 'from-purple-500 to-purple-600', href: '/products?category=Hygiène' },
-  { name: 'Habillement',   icon: <Heart className="h-10 w-10" />,       color: 'from-pink-500 to-pink-600',    href: '/products?category=Vêtements' },
+  { name: 'Alimentaires',   icon: <ShoppingBag className="h-4 w-4" />, color: 'from-blue-500 to-blue-600',   href: '/products?category=Alimentaire' },
+  { name: 'Électroménager', icon: <Zap className="h-4 w-4" />,         color: 'from-orange-500 to-orange-600', href: '/products?category=Électroménager' },
+  { name: 'Hygiène',        icon: <Sparkles className="h-4 w-4" />,    color: 'from-purple-500 to-purple-600', href: '/products?category=Hygiène' },
+  { name: 'Habillement',    icon: <Heart className="h-4 w-4" />,       color: 'from-pink-500 to-pink-600',    href: '/products?category=Vêtements' },
 ];
 
 // ---------------------------------------------------------------------------
@@ -255,19 +246,10 @@ export default function HomePage() {
     <div className="min-h-screen flex flex-col">
 
       {/* ── Hero ── */}
-      <section className="relative h-screen flex items-center justify-center overflow-hidden bg-gradient-to-br from-[#001489] via-[#001070] to-[#000D57]">
+      <section className="relative h-screen flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.1&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center mix-blend-overlay opacity-20" />
-          <motion.div
-            className="absolute top-20 left-10 w-80 h-80 bg-white/5 rounded-full blur-3xl"
-            animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.5, 0.3] }}
-            transition={{ duration: 6, repeat: Infinity, repeatType: 'reverse' }}
-          />
-          <motion.div
-            className="absolute bottom-20 right-20 w-96 h-96 bg-[#F9461C]/10 rounded-full blur-3xl"
-            animate={{ scale: [1, 1.1, 1], opacity: [0.2, 0.4, 0.2] }}
-            transition={{ duration: 8, repeat: Infinity, repeatType: 'reverse' }}
-          />
+          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?ixlib=rb-4.0.1&auto=format&fit=crop&w=2070&q=80')] bg-cover bg-center" />
+          <div className="absolute inset-0 bg-gradient-to-br from-black/60 via-black/40 to-black/50" />
         </div>
 
         <motion.div
@@ -325,137 +307,83 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* ── Features Grid ── */}
-      <section className="py-16 bg-white relative -mt-10">
+      {/* ── Produits populaires ── */}
+      <section className="py-16 bg-white">
         <div className="container mx-auto px-4">
+          {/* Section header */}
           <motion.div
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
             variants={staggerContainer()}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
           >
-            {features.map((feature, index) => (
-              <motion.div
-                key={index}
-                variants={fadeIn('up', 'spring', index * 0.1, 1)}
-                className="bg-gradient-to-br from-white to-gray-50 rounded-2xl p-6 text-center border border-gray-100 shadow-sm hover:shadow-md transition-all duration-300 group hover:-translate-y-1"
-              >
-                <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-[#001489] to-[#001070] rounded-2xl flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
-                  {feature.icon}
-                </div>
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">{feature.title}</h3>
-                <p className="text-gray-600 text-sm">{feature.description}</p>
+            <div>
+              <motion.div variants={textVariant(0.1)} className="inline-block mb-2">
+                <span className="text-[#F9461C] font-semibold bg-[#F9461C]/10 px-4 py-2 rounded-full text-sm">Populaires</span>
               </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── Categories ── */}
-      <section className="py-20 bg-gray-50">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            variants={staggerContainer()}
-            className="text-center mb-16"
-          >
-            <motion.div variants={textVariant(0.1)} className="inline-block mb-3">
-              <span className="text-[#001489] font-semibold bg-[#001489]/10 px-4 py-2 rounded-full">Catégories</span>
+              <motion.h2 variants={textVariant(0.2)} className="text-3xl font-bold text-gray-800">
+                Produits <span className="text-[#001489]">du Moment</span>
+              </motion.h2>
+            </div>
+            <motion.div variants={fadeIn('up', 'spring', 0.2, 1)}>
+              <Button asChild size="sm" variant="outline" className="border-[#001489] text-[#001489] hover:bg-[#001489] hover:text-white rounded-xl">
+                <Link href="/products" className="flex items-center gap-1 font-semibold">
+                  Tout voir <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
             </motion.div>
-            <motion.h2 variants={textVariant(0.2)} className="text-4xl font-bold text-gray-800 mb-4">
-              Explorez par <span className="text-[#F9461C]">Catégorie</span>
-            </motion.h2>
-            <motion.p variants={textVariant(0.3)} className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Découvrez notre large sélection de produits soigneusement organisés pour vous
-            </motion.p>
           </motion.div>
 
+          {/* Category filter chips */}
           <motion.div
-            variants={staggerContainer()}
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
+            variants={staggerContainer()}
+            className="flex flex-wrap gap-2 mb-8"
           >
-            {categories.map((category, index) => (
-              <motion.div
-                key={index}
-                variants={fadeIn('up', 'spring', index * 0.1, 1)}
-                className="group cursor-pointer"
-              >
-                <Link href={category.href}>
-                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100">
-                    <div className="relative h-48 overflow-hidden">
-                      <div className={`absolute inset-0 bg-gradient-to-r ${category.color} opacity-90`} />
-                      <div className="absolute inset-0 flex items-center justify-center text-white">
-                        {category.icon}
-                      </div>
-                      <div className="absolute bottom-4 left-4">
-                        <h3 className="text-xl font-bold text-white">{category.name}</h3>
-                      </div>
-                    </div>
-                  </div>
+            {categories.map((cat, index) => (
+              <motion.div key={index} variants={fadeIn('up', 'spring', index * 0.05, 0.8)}>
+                <Link
+                  href={cat.href}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 text-sm font-medium hover:border-[#001489] hover:text-[#001489] hover:bg-[#001489]/5 transition-all duration-200"
+                >
+                  {cat.icon}
+                  {cat.name}
                 </Link>
               </motion.div>
             ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ── Produits populaires ── */}
-      <section className="py-20 bg-white">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial="hidden"
-            whileInView="show"
-            viewport={{ once: true }}
-            variants={staggerContainer()}
-            className="text-center mb-16"
-          >
-            <motion.div variants={textVariant(0.1)} className="inline-block mb-3">
-              <span className="text-[#F9461C] font-semibold bg-[#F9461C]/10 px-4 py-2 rounded-full">Populaires</span>
+            <motion.div variants={fadeIn('up', 'spring', categories.length * 0.05, 0.8)}>
+              <Link
+                href="/packs"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-gray-200 bg-white text-gray-700 text-sm font-medium hover:border-[#F9461C] hover:text-[#F9461C] hover:bg-[#F9461C]/5 transition-all duration-200"
+              >
+                <Package className="h-4 w-4" />
+                Packs
+              </Link>
             </motion.div>
-            <motion.h2 variants={textVariant(0.2)} className="text-4xl font-bold text-gray-800 mb-4">
-              Produits <span className="text-[#001489]">Populaires</span>
-            </motion.h2>
-            <motion.p variants={textVariant(0.3)} className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Découvrez les produits les plus appréciés par nos clients
-            </motion.p>
           </motion.div>
 
+          {/* Products grid */}
           <motion.div
             variants={staggerContainer()}
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12"
+            className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-10"
           >
             {productsLoading
               ? Array.from({ length: 4 }).map((_, i) => <ProductCardSkeleton key={i} />)
               : featuredProducts.length > 0
                 ? featuredProducts.map((p, i) => <ProductCard key={p._id} product={p} index={i} />)
                 : (
-                  <div className="lg:col-span-4 text-center py-12 text-gray-400">
+                  <div className="col-span-2 lg:col-span-4 text-center py-12 text-gray-400">
                     <Package className="h-12 w-12 mx-auto mb-3 text-gray-200" />
                     <p>Aucun produit en vedette pour le moment.</p>
                   </div>
                 )
             }
-          </motion.div>
-
-          <motion.div
-            variants={fadeIn('up', 'spring', 0.4, 1)}
-            className="text-center"
-          >
-            <Button asChild size="lg" className="bg-gradient-to-r from-[#001489] to-[#001070] hover:from-[#001070] hover:to-[#001489] px-8 py-3 rounded-xl">
-              <Link href="/products" className="flex items-center font-semibold">
-                Voir tout le catalogue
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Link>
-            </Button>
           </motion.div>
         </div>
       </section>

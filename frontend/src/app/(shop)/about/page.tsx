@@ -86,12 +86,21 @@ export default function AboutPage() {
             >
               Qui sommes-<span className="text-[#f9461c]">nous</span>?
             </motion.h1>
-            
+
             <motion.p
               variants={fadeIn('up', 0.4)}
-              className="text-xl mb-10 max-w-2xl mx-auto text-blue-100 leading-relaxed"
+              className="text-xl mb-4 max-w-2xl mx-auto text-white leading-relaxed font-medium"
             >
-              Découvrez l&apos;histoire et les valeurs qui font de Cheikh Distribution le partenaire de confiance des Sénégalais
+              Cheikh Distribution est une entreprise polyvalente sénégalaise spécialisée dans
+              la vente, la livraison et la transformation de produits de consommation courante.
+            </motion.p>
+
+            <motion.p
+              variants={fadeIn('up', 0.45)}
+              className="text-base mb-10 max-w-2xl mx-auto text-blue-100 leading-relaxed"
+            >
+              Nous offrons une large gamme de produits alimentaires, électroménagers, vêtements et
+              articles d&apos;hygiène pour satisfaire les besoins des familles, des commerçants et des professionnels à travers tout le Sénégal.
             </motion.p>
           </motion.div>
         </div>

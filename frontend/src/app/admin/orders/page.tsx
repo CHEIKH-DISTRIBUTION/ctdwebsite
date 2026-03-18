@@ -9,7 +9,8 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { adminApi } from '@/features/admin/api/admin.api';
 import type { OrderResponse, OrderStatus } from '@/shared/types/order.types';
-import { AlertTriangle, Loader2, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { AlertTriangle, Loader2, ChevronLeft, ChevronRight, Eye, Search, X } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 
 const LIMIT = 20;
 
@@ -44,6 +45,7 @@ export default function AdminOrdersPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalOrders, setTotalOrders] = useState(0);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [search, setSearch]         = useState('');
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -66,6 +68,15 @@ export default function AdminOrdersPage() {
 
   useEffect(() => { fetchOrders(); }, [fetchOrders]);
 
+  // Client-side search: filter by order number or customer name/phone
+  const filteredOrders = search.trim()
+    ? orders.filter((o) =>
+        o.orderNumber?.toLowerCase().includes(search.toLowerCase()) ||
+        o.user?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        o.user?.phone?.includes(search)
+      )
+    : orders;
+
   const handleStatusChange = async (orderId: string, newStatus: OrderStatus) => {
     setUpdatingId(orderId);
     try {
@@ -86,27 +97,51 @@ export default function AdminOrdersPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Toutes les Commandes</h1>
-          {!loading && (
-            <p className="text-sm text-gray-500 mt-0.5">{totalOrders} commande{totalOrders !== 1 ? 's' : ''}</p>
-          )}
+      <div className="mb-6 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Toutes les Commandes</h1>
+            {!loading && (
+              <p className="text-sm text-gray-500 mt-0.5">
+                {search ? `${filteredOrders.length} résultat${filteredOrders.length !== 1 ? 's' : ''} sur ${totalOrders}` : `${totalOrders} commande${totalOrders !== 1 ? 's' : ''}`}
+              </p>
+            )}
+          </div>
+
+          {/* Status filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => { setStatusFilter(e.target.value as OrderStatus | ''); setPage(1); }}
+            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white
+                       focus:outline-none focus:border-[#001489] focus:ring-2 focus:ring-[#001489]/15
+                       transition-all cursor-pointer"
+          >
+            <option value="">Tous les statuts</option>
+            {(Object.keys(STATUS_LABELS) as OrderStatus[]).map((s) => (
+              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+            ))}
+          </select>
         </div>
 
-        {/* Status filter */}
-        <select
-          value={statusFilter}
-          onChange={(e) => { setStatusFilter(e.target.value as OrderStatus | ''); setPage(1); }}
-          className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white
-                     focus:outline-none focus:border-[#001489] focus:ring-2 focus:ring-[#001489]/15
-                     transition-all cursor-pointer"
-        >
-          <option value="">Tous les statuts</option>
-          {(Object.keys(STATUS_LABELS) as OrderStatus[]).map((s) => (
-            <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-          ))}
-        </select>
+        {/* Search bar */}
+        <div className="relative max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-4 w-4" />
+          <Input
+            type="text"
+            placeholder="Rechercher par numéro, client ou téléphone…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-10 pr-10 border-gray-200 rounded-xl h-10 focus:border-[#001489] focus:ring-[#001489]/20"
+          />
+          {search && (
+            <button
+              onClick={() => setSearch('')}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Error */}
@@ -124,7 +159,7 @@ export default function AdminOrdersPage() {
         <div className="flex items-center justify-center py-24 text-gray-400">
           <Loader2 className="h-8 w-8 animate-spin" />
         </div>
-      ) : orders.length === 0 ? (
+      ) : filteredOrders.length === 0 ? (
         <div className="text-center py-24 text-gray-500">
           <p className="text-lg font-medium">Aucune commande trouvée</p>
           {statusFilter && (
@@ -156,7 +191,7 @@ export default function AdminOrdersPage() {
                 </tr>
               </thead>
               <tbody>
-                {orders.map((order) => (
+                {filteredOrders.map((order) => (
                   <tr key={order._id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
                     <td className="px-4 py-3 font-mono text-xs font-semibold text-gray-700">
                       <Link
@@ -210,7 +245,7 @@ export default function AdminOrdersPage() {
 
           {/* ── Mobile cards (< md) ──────────────────────────────────────── */}
           <div className="md:hidden space-y-3">
-            {orders.map((order) => (
+            {filteredOrders.map((order) => (
               <div key={order._id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
                 {/* Top row: order number + date */}
                 <div className="flex items-center justify-between mb-3">
