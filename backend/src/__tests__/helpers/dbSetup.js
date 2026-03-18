@@ -15,6 +15,10 @@ const mongoose = require('mongoose');
 // The module is cached by Node, so subsequent requires in test files are free.
 require('../../server');
 
+// Disable Turnstile CAPTCHA in tests — must happen AFTER server.js loads
+// (dotenv in server.js re-sets env vars from .env)
+delete process.env.TURNSTILE_SECRET_KEY;
+
 beforeAll(async () => {
   // readyState 1 = connected, 2 = connecting
   if (mongoose.connection.readyState !== 1) {
