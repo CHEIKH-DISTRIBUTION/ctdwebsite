@@ -29,6 +29,8 @@ import {
   Eye,
   Loader2,
   AlertTriangle,
+  Lock,
+  CheckCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 import { ordersApi } from '@/features/orders/api/orders.api';
@@ -69,17 +71,18 @@ export default function AccountPage() {
   const { products: favoriteProducts, isLoadingProducts: favLoading, fetchFavorites, toggleFavorite } = useFavorites();
   const router = useRouter();
 
-  // Redirect non-customer roles to their own dashboard
-  useEffect(() => {
-    if (!user) return;
-    if (user.role === 'admin') { router.replace('/admin/dashboard'); return; }
-    if (user.role === 'delivery') { router.replace('/delivery'); return; }
-  }, [user, router]);
+  const isCustomer = user?.role === 'customer';
 
   const [isEditing, setIsEditing]   = useState(false);
   const [isSaving, setIsSaving]     = useState(false);
   const [saveError, setSaveError]   = useState<string | null>(null);
   const [activeTab, setActiveTab]   = useState('profile');
+
+  // Password change
+  const [pwData, setPwData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
+  const [pwSaving, setPwSaving]   = useState(false);
+  const [pwError, setPwError]     = useState<string | null>(null);
+  const [pwSuccess, setPwSuccess] = useState(false);
   const [userData, setUserData]     = useState({
     name:    user?.name    ?? '',
     phone:   user?.phone   ?? '',
@@ -106,7 +109,7 @@ export default function AccountPage() {
     }
   }, []);
 
-  useEffect(() => { loadOrders(); }, [loadOrders]);
+  useEffect(() => { if (isCustomer) loadOrders(); }, [isCustomer, loadOrders]);
 
   // Keep form in sync when user profile refreshes
   useEffect(() => {
@@ -190,6 +193,39 @@ export default function AccountPage() {
     router.push('/');
   };
 
+  const handlePasswordChange = async () => {
+    setPwError(null);
+    setPwSuccess(false);
+
+    if (!pwData.currentPassword || !pwData.newPassword) {
+      setPwError('Veuillez remplir tous les champs.');
+      return;
+    }
+    if (pwData.newPassword.length < 8) {
+      setPwError('Le nouveau mot de passe doit contenir au moins 8 caractères.');
+      return;
+    }
+    if (pwData.newPassword !== pwData.confirmPassword) {
+      setPwError('Les mots de passe ne correspondent pas.');
+      return;
+    }
+
+    setPwSaving(true);
+    try {
+      await httpClient.put('/api/auth/change-password', {
+        currentPassword: pwData.currentPassword,
+        newPassword: pwData.newPassword,
+      });
+      setPwSuccess(true);
+      setPwData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erreur lors du changement de mot de passe.';
+      setPwError(message);
+    } finally {
+      setPwSaving(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-gray-100">
       {/* Header */}
@@ -240,16 +276,20 @@ export default function AccountPage() {
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl">
                       <Star className="h-4 w-4 text-[#FFB500]" />
-                      <span className="text-gray-700">Client fidèle</span>
-                    </div>
-                    <div className="flex items-center gap-2 p-3 bg-green-50 rounded-xl">
-                      <ShoppingBag className="h-4 w-4 text-green-600" />
                       <span className="text-gray-700">
-                        {ordersLoading
-                          ? '…'
-                          : `${ordersTotal} commande${ordersTotal !== 1 ? 's' : ''}`}
+                        {user.role === 'admin' ? 'Administrateur' : user.role === 'delivery' ? 'Livreur' : 'Client fidèle'}
                       </span>
                     </div>
+                    {isCustomer && (
+                      <div className="flex items-center gap-2 p-3 bg-green-50 rounded-xl">
+                        <ShoppingBag className="h-4 w-4 text-green-600" />
+                        <span className="text-gray-700">
+                          {ordersLoading
+                            ? '…'
+                            : `${ordersTotal} commande${ordersTotal !== 1 ? 's' : ''}`}
+                        </span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 p-3 bg-purple-50 rounded-xl">
                       <Calendar className="h-4 w-4 text-purple-600" />
                       <span className="text-gray-700">Membre depuis {memberSince}</span>
@@ -268,7 +308,7 @@ export default function AccountPage() {
               transition={{ duration: 0.5 }}
             >
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-4 mb-8 bg-gray-100 p-1 rounded-xl">
+                <TabsList className={`grid ${isCustomer ? 'grid-cols-4' : 'grid-cols-2'} mb-8 bg-gray-100 p-1 rounded-xl`}>
                   <TabsTrigger
                     value="profile"
                     className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#001489] transition-all"
@@ -276,20 +316,24 @@ export default function AccountPage() {
                     <User className="h-4 w-4" />
                     <span className="hidden sm:inline">Profil</span>
                   </TabsTrigger>
-                  <TabsTrigger
-                    value="orders"
-                    className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#001489] transition-all"
-                  >
-                    <ShoppingBag className="h-4 w-4" />
-                    <span className="hidden sm:inline">Commandes</span>
-                  </TabsTrigger>
-                  <TabsTrigger
-                    value="wishlist"
-                    className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#001489] transition-all"
-                  >
-                    <Heart className="h-4 w-4" />
-                    <span className="hidden sm:inline">Favoris</span>
-                  </TabsTrigger>
+                  {isCustomer && (
+                    <TabsTrigger
+                      value="orders"
+                      className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#001489] transition-all"
+                    >
+                      <ShoppingBag className="h-4 w-4" />
+                      <span className="hidden sm:inline">Commandes</span>
+                    </TabsTrigger>
+                  )}
+                  {isCustomer && (
+                    <TabsTrigger
+                      value="wishlist"
+                      className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#001489] transition-all"
+                    >
+                      <Heart className="h-4 w-4" />
+                      <span className="hidden sm:inline">Favoris</span>
+                    </TabsTrigger>
+                  )}
                   <TabsTrigger
                     value="settings"
                     className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#001489] transition-all"
@@ -601,7 +645,89 @@ export default function AccountPage() {
                 </TabsContent>
 
                 {/* ── Settings tab ──────────────────────────────────────── */}
-                <TabsContent value="settings">
+                <TabsContent value="settings" className="space-y-6">
+                  {/* Password change */}
+                  <Card className="border-gray-200 shadow-lg rounded-2xl">
+                    <CardHeader>
+                      <CardTitle className="text-gray-800 flex items-center gap-2">
+                        <Lock className="h-5 w-5" style={{ color: COLORS.primary }} />
+                        Changer le mot de passe
+                      </CardTitle>
+                      <CardDescription>
+                        Utilisez un mot de passe fort d&apos;au moins 8 caractères
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {pwSuccess && (
+                        <div className="flex items-center gap-3 bg-green-50 border border-green-200 rounded-xl p-4 text-green-700">
+                          <CheckCircle className="h-5 w-5 flex-shrink-0" />
+                          <p className="text-sm">Mot de passe mis à jour avec succès.</p>
+                        </div>
+                      )}
+                      {pwError && (
+                        <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+                          <AlertTriangle className="h-5 w-5 flex-shrink-0" />
+                          <p className="text-sm">{pwError}</p>
+                        </div>
+                      )}
+                      <div className="space-y-2">
+                        <Label htmlFor="currentPassword" className="flex items-center gap-2 text-gray-700">
+                          <Lock className="h-4 w-4" />
+                          Mot de passe actuel
+                        </Label>
+                        <Input
+                          id="currentPassword"
+                          type="password"
+                          value={pwData.currentPassword}
+                          onChange={(e) => setPwData({ ...pwData, currentPassword: e.target.value })}
+                          className="rounded-xl border-gray-300 focus:border-[#001489]"
+                          placeholder="Entrez votre mot de passe actuel"
+                        />
+                      </div>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="newPassword" className="flex items-center gap-2 text-gray-700">
+                            <Shield className="h-4 w-4" />
+                            Nouveau mot de passe
+                          </Label>
+                          <Input
+                            id="newPassword"
+                            type="password"
+                            value={pwData.newPassword}
+                            onChange={(e) => setPwData({ ...pwData, newPassword: e.target.value })}
+                            className="rounded-xl border-gray-300 focus:border-[#001489]"
+                            placeholder="8 caractères minimum"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="confirmPassword" className="flex items-center gap-2 text-gray-700">
+                            <Shield className="h-4 w-4" />
+                            Confirmer le mot de passe
+                          </Label>
+                          <Input
+                            id="confirmPassword"
+                            type="password"
+                            value={pwData.confirmPassword}
+                            onChange={(e) => setPwData({ ...pwData, confirmPassword: e.target.value })}
+                            className="rounded-xl border-gray-300 focus:border-[#001489]"
+                            placeholder="Répétez le nouveau mot de passe"
+                          />
+                        </div>
+                      </div>
+                      <Button
+                        onClick={handlePasswordChange}
+                        disabled={pwSaving}
+                        className="rounded-xl transition-all hover:shadow-lg"
+                        style={{ backgroundColor: COLORS.primary }}
+                      >
+                        {pwSaving
+                          ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Modification…</>
+                          : <><Lock className="h-4 w-4 mr-2" />Modifier le mot de passe</>}
+                      </Button>
+                    </CardContent>
+                  </Card>
+
+                  {/* Notification preferences */}
                   <Card className="border-gray-200 shadow-lg rounded-2xl">
                     <CardHeader>
                       <CardTitle className="text-gray-800 flex items-center gap-2">
