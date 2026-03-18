@@ -37,9 +37,9 @@ import { useFavorites } from '@/features/favorites';
 import type { OrderResponse } from '@/shared/types/order.types';
 
 const COLORS = {
-  primary:   '#284bcc',
-  secondary: '#f9461c',
-  accent:    '#f6c700',
+  primary:   '#001489',
+  secondary: '#F9461C',
+  accent:    '#FFB500',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -68,6 +68,13 @@ export default function AccountPage() {
   const { user, logout, fetchProfile } = useAuthStore();
   const { products: favoriteProducts, isLoadingProducts: favLoading, fetchFavorites, toggleFavorite } = useFavorites();
   const router = useRouter();
+
+  // Redirect non-customer roles to their own dashboard
+  useEffect(() => {
+    if (!user) return;
+    if (user.role === 'admin') { router.replace('/admin/dashboard'); return; }
+    if (user.role === 'delivery') { router.replace('/delivery'); return; }
+  }, [user, router]);
 
   const [isEditing, setIsEditing]   = useState(false);
   const [isSaving, setIsSaving]     = useState(false);
@@ -123,7 +130,7 @@ export default function AccountPage() {
         >
           <div className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200">
             <div className="w-16 h-16 mx-auto bg-gradient-to-br from-blue-100 to-blue-50 rounded-full flex items-center justify-center mb-6">
-              <div className="w-10 h-10 bg-gradient-to-r from-[#284bcc] to-[#1d3aa3] rounded-full flex items-center justify-center">
+              <div className="w-10 h-10 bg-gradient-to-r from-[#001489] to-[#001070] rounded-full flex items-center justify-center">
                 <Shield className="h-5 w-5 text-white" />
               </div>
             </div>
@@ -222,7 +229,7 @@ export default function AccountPage() {
               <Card className="border-gray-200 shadow-lg rounded-2xl">
                 <CardHeader className="text-center pb-6">
                   <div className="w-24 h-24 mx-auto bg-gradient-to-br from-blue-100 to-blue-50 rounded-full flex items-center justify-center mb-4">
-                    <div className="w-16 h-16 bg-gradient-to-r from-[#284bcc] to-[#1d3aa3] rounded-full flex items-center justify-center">
+                    <div className="w-16 h-16 bg-gradient-to-r from-[#001489] to-[#001070] rounded-full flex items-center justify-center">
                       <User className="h-8 w-8 text-white" />
                     </div>
                   </div>
@@ -232,7 +239,7 @@ export default function AccountPage() {
                 <CardContent>
                   <div className="space-y-3 text-sm">
                     <div className="flex items-center gap-2 p-3 bg-blue-50 rounded-xl">
-                      <Star className="h-4 w-4 text-[#f6c700]" />
+                      <Star className="h-4 w-4 text-[#FFB500]" />
                       <span className="text-gray-700">Client fidèle</span>
                     </div>
                     <div className="flex items-center gap-2 p-3 bg-green-50 rounded-xl">
@@ -264,28 +271,28 @@ export default function AccountPage() {
                 <TabsList className="grid grid-cols-4 mb-8 bg-gray-100 p-1 rounded-xl">
                   <TabsTrigger
                     value="profile"
-                    className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#284bcc] transition-all"
+                    className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#001489] transition-all"
                   >
                     <User className="h-4 w-4" />
                     <span className="hidden sm:inline">Profil</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="orders"
-                    className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#284bcc] transition-all"
+                    className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#001489] transition-all"
                   >
                     <ShoppingBag className="h-4 w-4" />
                     <span className="hidden sm:inline">Commandes</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="wishlist"
-                    className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#284bcc] transition-all"
+                    className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#001489] transition-all"
                   >
                     <Heart className="h-4 w-4" />
                     <span className="hidden sm:inline">Favoris</span>
                   </TabsTrigger>
                   <TabsTrigger
                     value="settings"
-                    className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#284bcc] transition-all"
+                    className="flex items-center gap-2 rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm data-[state=active]:text-[#001489] transition-all"
                   >
                     <Settings className="h-4 w-4" />
                     <span className="hidden sm:inline">Paramètres</span>
@@ -305,7 +312,7 @@ export default function AccountPage() {
                           <Button
                             variant="outline"
                             onClick={() => setIsEditing(true)}
-                            className="flex items-center gap-2 rounded-xl border-[#284bcc] text-[#284bcc] hover:bg-[#284bcc]/10 transition-all self-start sm:self-auto"
+                            className="flex items-center gap-2 rounded-xl border-[#001489] text-[#001489] hover:bg-[#001489]/10 transition-all self-start sm:self-auto"
                           >
                             <Edit3 className="h-4 w-4" />
                             Modifier
@@ -353,7 +360,7 @@ export default function AccountPage() {
                             value={userData.name}
                             onChange={(e) => setUserData({ ...userData, name: e.target.value })}
                             disabled={!isEditing}
-                            className="rounded-xl border-gray-300 focus:border-[#284bcc]"
+                            className="rounded-xl border-gray-300 focus:border-[#001489]"
                           />
                         </div>
                         <div className="space-y-2">
@@ -381,7 +388,7 @@ export default function AccountPage() {
                             value={userData.phone}
                             onChange={(e) => setUserData({ ...userData, phone: e.target.value })}
                             disabled={!isEditing}
-                            className="rounded-xl border-gray-300 focus:border-[#284bcc]"
+                            className="rounded-xl border-gray-300 focus:border-[#001489]"
                           />
                         </div>
                         <div className="space-y-2">
@@ -394,7 +401,7 @@ export default function AccountPage() {
                             value={userData.address}
                             onChange={(e) => setUserData({ ...userData, address: e.target.value })}
                             disabled={!isEditing}
-                            className="rounded-xl border-gray-300 focus:border-[#284bcc]"
+                            className="rounded-xl border-gray-300 focus:border-[#001489]"
                           />
                         </div>
                       </div>
@@ -477,7 +484,7 @@ export default function AccountPage() {
                                   <p className="font-bold text-base sm:text-lg" style={{ color: COLORS.primary }}>
                                     {order.total.toLocaleString('fr-FR')} FCFA
                                   </p>
-                                  <Button asChild variant="ghost" size="sm" className="text-gray-600 hover:text-[#284bcc]">
+                                  <Button asChild variant="ghost" size="sm" className="text-gray-600 hover:text-[#001489]">
                                     <Link href={`/orders/${order._id}`}>
                                       <Eye className="h-4 w-4 mr-1" />
                                       Détails
@@ -492,7 +499,7 @@ export default function AccountPage() {
                               <Button
                                 asChild
                                 variant="outline"
-                                className="rounded-xl border-[#284bcc] text-[#284bcc] hover:bg-[#284bcc]/10"
+                                className="rounded-xl border-[#001489] text-[#001489] hover:bg-[#001489]/10"
                               >
                                 <Link href="/orders">
                                   Voir toutes les commandes ({ordersTotal})
