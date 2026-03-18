@@ -727,44 +727,24 @@ export default function AccountPage() {
                     </CardContent>
                   </Card>
 
-                  {/* Notification preferences */}
+                  {/* Notification info */}
                   <Card className="border-gray-200 shadow-lg rounded-2xl">
                     <CardHeader>
                       <CardTitle className="text-gray-800 flex items-center gap-2">
                         <Bell className="h-5 w-5" style={{ color: COLORS.primary }} />
-                        Préférences de notification
+                        Notifications
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between gap-3 p-4 border border-gray-200 rounded-xl">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-10 h-10 flex-shrink-0 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <Bell className="h-5 w-5" style={{ color: COLORS.primary }} />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-gray-800 text-sm sm:text-base">Emails promotionnels</p>
-                            <p className="text-xs sm:text-sm text-gray-600">Offres spéciales et nouveautés</p>
-                          </div>
+                    <CardContent>
+                      <div className="flex items-start gap-3 p-4 bg-blue-50 border border-blue-100 rounded-xl">
+                        <Bell className="h-5 w-5 text-[#001489] flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-gray-800">Notifications activées</p>
+                          <p className="text-xs text-gray-600 mt-1">
+                            Vous recevez les confirmations de commande et les alertes de sécurité par email.
+                            Contactez-nous pour modifier vos préférences.
+                          </p>
                         </div>
-                        <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                          <input aria-label="emails-promo" type="checkbox" className="sr-only peer" defaultChecked />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                        </label>
-                      </div>
-                      <div className="flex items-center justify-between gap-3 p-4 border border-gray-200 rounded-xl">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <div className="w-10 h-10 flex-shrink-0 bg-green-100 rounded-lg flex items-center justify-center">
-                            <Shield className="h-5 w-5 text-green-600" />
-                          </div>
-                          <div className="min-w-0">
-                            <p className="font-medium text-gray-800 text-sm sm:text-base">Notifications de sécurité</p>
-                            <p className="text-xs sm:text-sm text-gray-600">Alertes importantes de compte</p>
-                          </div>
-                        </div>
-                        <label className="relative inline-flex items-center cursor-pointer flex-shrink-0">
-                          <input aria-label="notifs-securite" type="checkbox" className="sr-only peer" defaultChecked />
-                          <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-600"></div>
-                        </label>
                       </div>
                     </CardContent>
                   </Card>

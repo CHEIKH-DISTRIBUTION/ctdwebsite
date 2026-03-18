@@ -377,17 +377,20 @@ export default function RegisterPage() {
               </Button>
             </form>
 
-            {/* Social login */}
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-200" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-400">Ou continuer avec</span>
-              </div>
-            </div>
-
-            <SocialAuthButtons redirectTo="/" />
+            {/* Social login — only shows if Google/Facebook env vars are set */}
+            {(process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_FACEBOOK_APP_ID) && (
+              <>
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-gray-200" />
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-2 bg-white text-gray-400">Ou continuer avec</span>
+                  </div>
+                </div>
+                <SocialAuthButtons redirectTo="/" />
+              </>
+            )}
 
             <div className="mt-6 pt-6 border-t border-gray-200">
               <p className="text-sm text-center text-gray-600">
