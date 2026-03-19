@@ -2,6 +2,7 @@
 
 import './globals.css';
 import { RootLayoutClient } from './RootLayoutClient';
+import { GoogleAnalytics } from '@/components/analytics/GoogleAnalytics';
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
@@ -41,6 +42,7 @@ export default function RootLayout({
   return (
     <html lang="fr">
       <body>
+        <GoogleAnalytics />
         <RootLayoutClient>
           {children}
         </RootLayoutClient>
