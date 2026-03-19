@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { isValidSenegalPhone } from '@/shared/utils/phone';
 import { motion } from 'framer-motion';
 import {
@@ -205,27 +206,39 @@ export default function AccountPage() {
 
   const loadAddresses = useCallback(async () => {
     setAddrLoading(true);
-    try { setAddresses(await authApi.getAddresses()); } catch { /* ignore */ }
+    try { setAddresses(await authApi.getAddresses()); }
+    catch (err) { console.error('Erreur chargement adresses:', err); }
     finally { setAddrLoading(false); }
   }, []);
 
   useEffect(() => { loadAddresses(); }, [loadAddresses]);
 
   const handleAddAddress = async () => {
-    if (!newAddr.street.trim() || !newAddr.city.trim()) return;
+    if (!newAddr.street.trim() || !newAddr.city.trim()) {
+      toast.error('Veuillez remplir la rue et la ville');
+      return;
+    }
     try {
       const updated = await authApi.addAddress({ ...newAddr, country: 'Sénégal' } as Omit<UserAddressEntry, '_id'>);
       setAddresses(updated);
       setShowAddrForm(false);
       setNewAddr({ label: 'Domicile', street: '', city: 'Dakar', isDefault: false });
-    } catch { /* ignore */ }
+      toast.success('Adresse ajoutée');
+    } catch (err) {
+      console.error('Erreur ajout adresse:', err);
+      toast.error('Erreur lors de l\'ajout de l\'adresse');
+    }
   };
 
   const handleDeleteAddress = async (id: string) => {
     try {
       const updated = await authApi.deleteAddress(id);
       setAddresses(updated);
-    } catch { /* ignore */ }
+      toast.success('Adresse supprimée');
+    } catch (err) {
+      console.error('Erreur suppression adresse:', err);
+      toast.error('Erreur lors de la suppression');
+    }
   };
 
   const handleSetDefaultAddress = async (id: string) => {
