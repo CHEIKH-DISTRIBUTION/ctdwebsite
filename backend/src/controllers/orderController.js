@@ -17,6 +17,15 @@ const smsService   = require('../infrastructure/sms/smsService');
 //         cannot leave stock decremented without a matching order.
 //         Requires MongoDB replica set (Atlas, or `rs.initiate()` locally).
 exports.createOrder = async (req, res) => {
+  // Block unverified users from ordering
+  const currentUser = await User.findById(req.user.id).select('isEmailVerified');
+  if (currentUser && !currentUser.isEmailVerified) {
+    return res.status(403).json({
+      success: false,
+      message: 'Veuillez vérifier votre adresse email avant de passer une commande.',
+    });
+  }
+
   const session = await mongoose.startSession();
   let createdOrder;
   let lowStockProducts;

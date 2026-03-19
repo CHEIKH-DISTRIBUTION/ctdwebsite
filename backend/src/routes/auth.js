@@ -14,6 +14,8 @@ const {
   resetPassword,
   googleAuth,
   facebookAuth,
+  verifyEmail,
+  resendVerification,
   getAddresses,
   addAddress,
   updateAddress,
@@ -67,6 +69,9 @@ router.post('/logout', logout);
 router.post('/forgot-password', authLimiter, verifyCaptcha, validateForgotPassword, forgotPassword);
 router.post('/reset-password/:token', strictLimiter, resetPassword);
 
+// Email verification — public link clicked from email
+router.get('/verify-email/:token', verifyEmail);
+
 // Social OAuth — rate-limited, no CAPTCHA (token verification acts as proof-of-humanity)
 router.post('/google',   authLimiter, googleAuth);
 router.post('/facebook', authLimiter, facebookAuth);
@@ -77,6 +82,9 @@ router.get('/me',              protect, getMe);
 router.get('/profile',         protect, getMe);
 router.put('/profile',         protect, updateMe);
 router.put('/change-password', protect, updatePassword);
+
+// Resend verification email — protected (must be logged in)
+router.post('/resend-verification', protect, strictLimiter, resendVerification);
 
 // Multiple addresses
 router.get('/addresses',              protect, getAddresses);

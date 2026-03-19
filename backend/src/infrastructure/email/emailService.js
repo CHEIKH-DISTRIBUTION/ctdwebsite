@@ -315,4 +315,42 @@ async function sendLowStockAlert(products) {
   }
 }
 
-module.exports = { sendOrderConfirmation, sendPasswordResetEmail, sendLowStockAlert };
+/**
+ * Send an email-verification link to a newly registered user.
+ * @param {string} email
+ * @param {string} verificationToken — plain token (will be part of the URL)
+ */
+async function sendEmailVerification(email, verificationToken) {
+  const verifyUrl = `${process.env.BACKEND_URL ?? 'http://localhost:5000'}/api/auth/verify-email/${verificationToken}`;
+  const subject   = 'Confirmez votre adresse email — Cheikh Distribution';
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;background:#f4f4f4;padding:24px;">
+  <div style="max-width:520px;margin:auto;background:#fff;border-radius:8px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,.08);">
+    <h2 style="color:#001489;margin-top:0;">Bienvenue chez Cheikh Distribution !</h2>
+    <p>Merci de vous être inscrit. Pour activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous.</p>
+    <div style="text-align:center;margin:32px 0;">
+      <a href="${verifyUrl}"
+         style="background:#001489;color:#fff;padding:14px 28px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">
+        Confirmer mon email
+      </a>
+    </div>
+    <p style="color:#888;font-size:13px;">Si vous n'avez pas créé de compte, ignorez cet email.</p>
+    <p style="color:#aaa;font-size:12px;border-top:1px solid #eee;padding-top:16px;margin-bottom:0;">
+      © ${new Date().getFullYear()} Cheikh Distribution · Dakar, Sénégal
+    </p>
+  </div>
+</body>
+</html>`;
+
+  try {
+    await sendMail(email, subject, html);
+    console.log(`[emailService] Email de vérification envoyé à ${email}`);
+  } catch (err) {
+    console.error(`[emailService] Erreur envoi vérification à ${email}:`, err.message);
+  }
+}
+
+module.exports = { sendOrderConfirmation, sendPasswordResetEmail, sendLowStockAlert, sendEmailVerification };

@@ -88,6 +88,10 @@ const userSchema = new mongoose.Schema({
   // Favorites — array of product references
   favorites: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }],
 
+  // Email verification
+  isEmailVerified:        { type: Boolean, default: false },
+  emailVerificationToken: { type: String, select: false },
+
   // Password reset (hashed token stored in DB; plain token sent by email)
   resetPasswordToken:  { type: String, select: false },
   resetPasswordExpire: { type: Date,   select: false }

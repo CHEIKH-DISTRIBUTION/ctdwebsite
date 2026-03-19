@@ -70,18 +70,21 @@ const issueRefreshToken = async (res, req, userId) => {
 
 /** Shape of the user object returned in responses — never includes password/tokens. */
 const publicUser = (u) => ({
-  id:    u._id,
-  name:  u.name,
-  email: u.email,
-  phone: u.phone,
-  role:  u.role,
+  id:              u._id,
+  name:            u.name,
+  email:           u.email,
+  phone:           u.phone,
+  role:            u.role,
+  isEmailVerified: u.isEmailVerified ?? false,
 });
 
 // ── register ───────────────────────────────────────────────────────────────
 // Public registration ALWAYS creates role = customer — no exceptions.
+// Sends a verification email; user can log in but cannot order until verified.
 exports.register = async (req, res) => {
   try {
     const { name, email, password, phone, address } = req.body;
+    const { sendEmailVerification } = require('../infrastructure/email/emailService');
 
     if (!name || !email || !password || !phone) {
       return res.status(400).json({ success: false, message: 'Veuillez fournir tous les champs requis' });
@@ -92,8 +95,20 @@ exports.register = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Un compte avec cet email existe déjà' });
     }
 
+    // Generate verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+
     // role is always 'customer' — any submitted role field is ignored
-    const user = await User.create({ name, email, password, phone, address, role: 'customer' });
+    const user = await User.create({
+      name, email, password, phone, address,
+      role: 'customer',
+      isEmailVerified: false,
+      emailVerificationToken: hashedToken,
+    });
+
+    // Send verification email (non-blocking — don't fail registration if email fails)
+    sendEmailVerification(email, verificationToken);
 
     const accessToken = generateAccessToken(user._id);
     await issueRefreshToken(res, req, user._id);
@@ -102,7 +117,7 @@ exports.register = async (req, res) => {
 
     return res.status(201).json({
       success: true,
-      message: 'Inscription réussie',
+      message: 'Inscription réussie. Un email de vérification a été envoyé.',
       data:    { token: accessToken, user: publicUser(user) },
     });
   } catch (err) {
@@ -379,17 +394,20 @@ exports.googleAuth = async (req, res) => {
 
     let user = await User.findOne({ $or: [{ googleId }, { email }] });
     if (user) {
-      if (!user.googleId) { user.googleId = googleId; await user.save({ validateBeforeSave: false }); }
+      if (!user.googleId) { user.googleId = googleId; }
+      if (!user.isEmailVerified) { user.isEmailVerified = true; }
+      if (user.isModified()) { await user.save({ validateBeforeSave: false }); }
       if (!user.isActive) return res.status(403).json({ success: false, message: 'Compte désactivé' });
     } else {
       user = await User.create({
-        name:     name || email.split('@')[0],
+        name:            name || email.split('@')[0],
         email,
         googleId,
-        password: crypto.randomBytes(32).toString('hex'),
-        phone:    '',
-        avatar:   picture || null,
-        role:     'customer',
+        password:        crypto.randomBytes(32).toString('hex'),
+        phone:           '',
+        avatar:          picture || null,
+        role:            'customer',
+        isEmailVerified: true,
       });
     }
 
@@ -431,17 +449,20 @@ exports.facebookAuth = async (req, res) => {
 
     let user = await User.findOne({ $or: [{ facebookId }, { email }] });
     if (user) {
-      if (!user.facebookId) { user.facebookId = facebookId; await user.save({ validateBeforeSave: false }); }
+      if (!user.facebookId) { user.facebookId = facebookId; }
+      if (!user.isEmailVerified) { user.isEmailVerified = true; }
+      if (user.isModified()) { await user.save({ validateBeforeSave: false }); }
       if (!user.isActive) return res.status(403).json({ success: false, message: 'Compte désactivé' });
     } else {
       user = await User.create({
-        name:       name || email.split('@')[0],
+        name:            name || email.split('@')[0],
         email,
         facebookId,
-        password:   crypto.randomBytes(32).toString('hex'),
-        phone:      '',
-        avatar:     picture?.data?.url || null,
-        role:       'customer',
+        password:        crypto.randomBytes(32).toString('hex'),
+        phone:           '',
+        avatar:          picture?.data?.url || null,
+        role:            'customer',
+        isEmailVerified: true,
       });
     }
 
@@ -458,6 +479,68 @@ exports.facebookAuth = async (req, res) => {
   } catch (err) {
     console.error('Erreur authentification Facebook:', err);
     return res.status(500).json({ success: false, message: "Erreur lors de l'authentification Facebook" });
+  }
+};
+
+// ── verifyEmail ─────────────────────────────────────────────────────────
+// GET /api/auth/verify-email/:token — public, clicked from email link
+exports.verifyEmail = async (req, res) => {
+  try {
+    const hashedToken = crypto.createHash('sha256').update(req.params.token).digest('hex');
+    const user = await User.findOne({ emailVerificationToken: hashedToken })
+      .select('+emailVerificationToken');
+
+    const clientUrl = process.env.CLIENT_URL ?? 'http://localhost:3000';
+
+    if (!user) {
+      return res.redirect(`${clientUrl}/verify-email?status=invalid`);
+    }
+
+    user.isEmailVerified        = true;
+    user.emailVerificationToken = undefined;
+    await user.save({ validateBeforeSave: false });
+
+    await audit.log({ action: 'email_verified', userId: user._id, email: user.email, req, success: true });
+
+    return res.redirect(`${clientUrl}/verify-email?status=success`);
+  } catch (err) {
+    console.error('Erreur vérification email:', err);
+    const clientUrl = process.env.CLIENT_URL ?? 'http://localhost:3000';
+    return res.redirect(`${clientUrl}/verify-email?status=error`);
+  }
+};
+
+// ── resendVerification ──────────────────────────────────────────────────
+// POST /api/auth/resend-verification — protected
+exports.resendVerification = async (req, res) => {
+  try {
+    const { sendEmailVerification } = require('../infrastructure/email/emailService');
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'Utilisateur non trouvé' });
+    }
+
+    if (user.isEmailVerified) {
+      return res.status(400).json({ success: false, message: 'Email déjà vérifié' });
+    }
+
+    // Generate new verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+    const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+
+    user.emailVerificationToken = hashedToken;
+    await user.save({ validateBeforeSave: false });
+
+    await sendEmailVerification(user.email, verificationToken);
+
+    return res.status(200).json({
+      success: true,
+      message: 'Un nouvel email de vérification a été envoyé.',
+    });
+  } catch (err) {
+    console.error('Erreur renvoi vérification:', err);
+    return res.status(500).json({ success: false, message: 'Erreur serveur' });
   }
 };
 

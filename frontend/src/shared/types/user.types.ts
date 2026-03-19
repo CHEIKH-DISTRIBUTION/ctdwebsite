@@ -36,6 +36,7 @@ export type UserResponse = {
   phone: string;
   role: UserRole;
   isActive: boolean;
+  isEmailVerified?: boolean;
   address?: UserAddress;
   avatar?: string | null;
   preferences: UserPreferences;

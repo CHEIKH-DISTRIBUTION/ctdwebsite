@@ -25,6 +25,10 @@ export const authApi = {
   facebookAuth: (accessToken: string) =>
     httpClient.post<AuthResponse>('/api/auth/facebook', { accessToken }),
 
+  /** POST /api/auth/resend-verification — resend email verification link */
+  resendVerification: () =>
+    httpClient.post<{ message: string }>('/api/auth/resend-verification', {}),
+
   // ── Addresses ────────────────────────────────────────────────────────────
 
   /** GET /api/auth/addresses */

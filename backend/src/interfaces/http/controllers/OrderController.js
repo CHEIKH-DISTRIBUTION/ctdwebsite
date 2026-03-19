@@ -5,6 +5,7 @@ const { OrderRepositoryMongo }   = require('../../../infrastructure/repositories
 const { ProductRepositoryMongo } = require('../../../infrastructure/repositories/ProductRepositoryMongo');
 const { PackRepositoryMongo }    = require('../../../infrastructure/repositories/PackRepositoryMongo');
 const { DomainError }            = require('../../../domain/errors/DomainError');
+const User                       = require('../../../models/User');
 
 // Singleton repositories (stateless — safe to share across requests)
 const orderRepository   = new OrderRepositoryMongo();
@@ -28,6 +29,15 @@ class OrderController {
    */
   static async createOrder(req, res) {
     try {
+      // Block unverified users from ordering
+      const currentUser = await User.findById(req.user.id).select('isEmailVerified');
+      if (currentUser && !currentUser.isEmailVerified) {
+        return res.status(403).json({
+          success: false,
+          message: 'Veuillez vérifier votre adresse email avant de passer une commande.',
+        });
+      }
+
       const { products, packs, paymentMethod, deliveryAddress, contactInfo, notes, couponCode } = req.body;
 
       const useCase = new CreateOrderUseCase({
