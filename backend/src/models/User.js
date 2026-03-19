@@ -46,6 +46,15 @@ const userSchema = new mongoose.Schema({
       default: 'Sénégal'
     }
   },
+  addresses: [{
+    label:      { type: String, default: 'Domicile' }, // "Domicile", "Bureau", etc.
+    street:     String,
+    city:       String,
+    region:     String,
+    postalCode: String,
+    country:    { type: String, default: 'Sénégal' },
+    isDefault:  { type: Boolean, default: false },
+  }],
   role: {
     type: String,
     enum: ['customer', 'admin', 'delivery'],
@@ -68,6 +77,12 @@ const userSchema = new mongoose.Schema({
       type: Boolean,
       default: true
     }
+  },
+
+  // Delivery person rating (computed from order ratings)
+  deliveryRating: {
+    average: { type: Number, default: 0 },
+    count:   { type: Number, default: 0 },
   },
 
   // Favorites — array of product references

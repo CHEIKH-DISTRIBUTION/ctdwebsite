@@ -460,3 +460,129 @@ exports.facebookAuth = async (req, res) => {
     return res.status(500).json({ success: false, message: "Erreur lors de l'authentification Facebook" });
   }
 };
+
+// ── Addresses (multiple) ──────────────────────────────────────────────────
+
+// @desc    Get user addresses
+// @route   GET /api/auth/addresses
+// @access  Private
+exports.getAddresses = async (req, res) => {
+  const user = await User.findById(req.user.id).select('addresses address');
+  // Merge legacy single address into the array for backward compat
+  let addresses = user.addresses || [];
+  if (addresses.length === 0 && user.address?.street) {
+    addresses = [{ ...user.address.toObject(), label: 'Domicile', isDefault: true }];
+  }
+  res.status(200).json({ success: true, data: addresses });
+};
+
+// @desc    Add a new address
+// @route   POST /api/auth/addresses
+// @access  Private
+exports.addAddress = async (req, res) => {
+  try {
+    const { label, street, city, region, postalCode, country, isDefault } = req.body;
+    if (!street || !city) {
+      return res.status(400).json({ success: false, message: 'Rue et ville requises' });
+    }
+
+    const user = await User.findById(req.user.id);
+
+    // If this is the default, unset other defaults
+    if (isDefault) {
+      user.addresses.forEach((a) => { a.isDefault = false; });
+    }
+
+    user.addresses.push({
+      label: label || 'Autre',
+      street, city,
+      region: region || '',
+      postalCode: postalCode || '',
+      country: country || 'Sénégal',
+      isDefault: isDefault || user.addresses.length === 0,
+    });
+
+    // Also update the legacy `address` field with the default
+    const def = user.addresses.find((a) => a.isDefault) || user.addresses[0];
+    if (def) {
+      user.address = { street: def.street, city: def.city, region: def.region, postalCode: def.postalCode, country: def.country };
+    }
+
+    await user.save();
+    res.status(201).json({ success: true, data: user.addresses });
+  } catch (error) {
+    console.error('Erreur ajout adresse:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+// @desc    Update an address
+// @route   PUT /api/auth/addresses/:addressId
+// @access  Private
+exports.updateAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const addr = user.addresses.id(req.params.addressId);
+    if (!addr) {
+      return res.status(404).json({ success: false, message: 'Adresse non trouvée' });
+    }
+
+    const { label, street, city, region, postalCode, country, isDefault } = req.body;
+    if (label) addr.label = label;
+    if (street) addr.street = street;
+    if (city) addr.city = city;
+    if (region !== undefined) addr.region = region;
+    if (postalCode !== undefined) addr.postalCode = postalCode;
+    if (country) addr.country = country;
+
+    if (isDefault) {
+      user.addresses.forEach((a) => { a.isDefault = false; });
+      addr.isDefault = true;
+    }
+
+    // Sync legacy address
+    const def = user.addresses.find((a) => a.isDefault) || user.addresses[0];
+    if (def) {
+      user.address = { street: def.street, city: def.city, region: def.region, postalCode: def.postalCode, country: def.country };
+    }
+
+    await user.save();
+    res.status(200).json({ success: true, data: user.addresses });
+  } catch (error) {
+    console.error('Erreur mise à jour adresse:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
+// @desc    Delete an address
+// @route   DELETE /api/auth/addresses/:addressId
+// @access  Private
+exports.deleteAddress = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    const addr = user.addresses.id(req.params.addressId);
+    if (!addr) {
+      return res.status(404).json({ success: false, message: 'Adresse non trouvée' });
+    }
+
+    const wasDefault = addr.isDefault;
+    addr.deleteOne();
+
+    // If we deleted the default, promote the first remaining
+    if (wasDefault && user.addresses.length > 0) {
+      user.addresses[0].isDefault = true;
+    }
+
+    // Sync legacy address
+    const def = user.addresses.find((a) => a.isDefault) || user.addresses[0];
+    user.address = def
+      ? { street: def.street, city: def.city, region: def.region, postalCode: def.postalCode, country: def.country }
+      : {};
+
+    await user.save();
+    res.status(200).json({ success: true, data: user.addresses });
+  } catch (error) {
+    console.error('Erreur suppression adresse:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};

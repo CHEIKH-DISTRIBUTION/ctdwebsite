@@ -11,6 +11,7 @@ import {
   Archive,
   AlertTriangle,
   Tag,
+  Ticket,
   Users,
   Truck,
   Menu,
@@ -19,6 +20,7 @@ import {
   ChevronRight,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
 } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 
@@ -33,8 +35,10 @@ const NAV_ITEMS = [
   { href: '/admin/packs',     label: 'Packs',             icon: Archive },
   { href: '/admin/stock',     label: 'Stock',             icon: AlertTriangle },
   { href: '/admin/offers',    label: 'Offres',            icon: Tag },
+  { href: '/admin/coupons',  label: 'Codes promo',       icon: Ticket },
   { href: '/admin/users',     label: 'Utilisateurs',      icon: Users },
   { href: '/delivery',        label: 'Vue livreur',        icon: Truck },
+  { href: '/admin/settings',  label: 'Paramètres',         icon: Settings },
 ] as const;
 
 const PAGE_TITLES: Record<string, string> = {
@@ -44,7 +48,9 @@ const PAGE_TITLES: Record<string, string> = {
   '/admin/packs':     'Packs',
   '/admin/stock':     'Stock & Alertes',
   '/admin/offers':    'Offres & Promotions',
+  '/admin/coupons':   'Codes promo',
   '/admin/users':     'Utilisateurs',
+  '/admin/settings':  'Paramètres',
 };
 
 const SIDEBAR_BG = 'linear-gradient(180deg, #001489 0%, #000D57 100%)';

@@ -3,6 +3,7 @@
 const ProductModel = require('../../models/Product');
 const { IProductRepository } = require('../../domain/repositories/IProductRepository');
 const { InsufficientStockError } = require('../../domain/errors/DomainError');
+const { sendLowStockAlert } = require('../email/emailService');
 
 /**
  * ProductRepositoryMongo — Mongoose implementation of IProductRepository.
@@ -19,9 +20,14 @@ class ProductRepositoryMongo extends IProductRepository {
    * Uses a conditional update ($gte guard) to prevent overselling.
    * Processes sequentially — use MongoDB sessions for true ACID transactions.
    *
+   * After all reservations succeed, checks for low-stock products and
+   * sends an email alert to admin if any are below their minStock threshold.
+   *
    * @param {{ productId: string, quantity: number }[]} reservations
    */
   async reserveStock(reservations) {
+    const lowStockProducts = [];
+
     for (const { productId, quantity } of reservations) {
       const updated = await ProductModel.findOneAndUpdate(
         { _id: productId, stock: { $gte: quantity } },
@@ -36,6 +42,21 @@ class ProductRepositoryMongo extends IProductRepository {
         const name      = product?.name  ?? productId;
         throw new InsufficientStockError(name, available, quantity);
       }
+
+      // Check if stock fell below threshold
+      if (updated.stock <= updated.minStock) {
+        lowStockProducts.push({
+          _id: updated._id,
+          name: updated.name,
+          stock: updated.stock,
+          minStock: updated.minStock,
+        });
+      }
+    }
+
+    // Fire-and-forget email alert (must never block the order flow)
+    if (lowStockProducts.length > 0) {
+      sendLowStockAlert(lowStockProducts).catch(() => {});
     }
   }
 

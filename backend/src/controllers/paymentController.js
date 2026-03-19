@@ -3,7 +3,18 @@ const Payment = require('../models/Payment');
 const Order = require('../models/Order');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
-const { initiateWavePayment, initiateOrangeMoneyPayment, processCardPayment } = require('../services/paymentService');
+const {
+  initiateWavePayment,
+  initiateOrangeMoneyPayment,
+  processCardPayment,
+  verifyWavePayment,
+  verifyOrangeMoneyPayment,
+  handleWaveWebhook,
+  handleOrangeMoneyWebhook,
+  processWaveRefund,
+  processOrangeMoneyRefund,
+  processCardRefund,
+} = require('../services/paymentService');
 
 /**
  * Verify a webhook HMAC-SHA256 signature using constant-time comparison.

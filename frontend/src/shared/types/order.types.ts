@@ -64,6 +64,8 @@ export type OrderResponse = {
   items: OrderItemResponse[];
   subtotal: number;
   deliveryFee: number;
+  discount?: number;
+  couponCode?: string | null;
   total: number;
   status: OrderStatus;
   paymentMethod: PaymentMethod;
@@ -85,6 +87,7 @@ export type CreateOrderCommand = {
   deliveryAddress: DeliveryAddress;
   contactInfo: ContactInfo;
   notes?: { customer?: string };
+  couponCode?: string;
 };
 
 export type PaginatedOrders = {

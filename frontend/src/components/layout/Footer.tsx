@@ -29,16 +29,15 @@ export function Footer() {
     { href: '/about',    label: 'À propos de nous' },
     { href: '/contact',  label: 'Contactez-nous' },
     { href: '/faq',      label: 'FAQ' },
-    { href: '/blog',     label: 'Blog' },
-    { href: '/careers',  label: 'Carrières' },
+    { href: '/terms',    label: 'Conditions générales' },
+    { href: '/privacy',  label: 'Confidentialité' },
   ];
 
   const serviceLinks = [
-    { href: '/shipping',    label: 'Livraison & Retours' },
-    { href: '/guarantee',   label: 'Garantie produits' },
-    { href: '/track-order', label: 'Suivi de commande' },
-    { href: '/size-guide',  label: 'Guide des tailles' },
-    { href: '/gift-cards',  label: 'Cartes cadeaux' },
+    { href: '/products', label: 'Nos produits' },
+    { href: '/packs',    label: 'Packs & Offres' },
+    { href: '/orders',   label: 'Suivi de commande' },
+    { href: '/account',  label: 'Mon compte' },
   ];
 
   return (
@@ -98,16 +97,16 @@ export function Footer() {
             {/* Socials */}
             <div className="flex gap-2">
               {[
-                { icon: Facebook,  color: '#1877F2', href: '#' },
-                { icon: Twitter,   color: '#1DA1F2', href: '#' },
-                { icon: Instagram, color: PRIMARY,   href: '#' },
-                { icon: Youtube,   color: '#FF0000', href: '#' },
-              ].map(({ icon: Icon, color, href }) => (
+                { icon: Facebook,  color: '#1877F2', href: '#', label: 'Facebook' },
+                { icon: Twitter,   color: '#1DA1F2', href: '#', label: 'Twitter' },
+                { icon: Instagram, color: PRIMARY,   href: '#', label: 'Instagram' },
+                { icon: Youtube,   color: '#FF0000', href: '#', label: 'YouTube' },
+              ].map(({ icon: Icon, color, href, label }) => (
                 <a
-                  key={href + color}
+                  key={label}
                   href={href}
                   className="w-9 h-9 rounded-lg flex items-center justify-center bg-white/8 hover:bg-white/15 transition-colors"
-                  aria-label="Réseau social"
+                  aria-label={`Suivez-nous sur ${label}`}
                 >
                   <Icon className="h-4 w-4" style={{ color }} />
                 </a>
@@ -177,10 +176,10 @@ export function Footer() {
                   +221 77 649 06 34
                 </span>
               </a>
-              <a href="mailto:contact@cheikhdistribution.com" className="flex items-center gap-3 group">
+              <a href="mailto:contact@cheikhdistribution.sn" className="flex items-center gap-3 group">
                 <Mail className="h-4 w-4 flex-shrink-0" style={{ color: SECONDARY }} />
                 <span className="text-[13px] text-white/60 group-hover:text-white transition-colors">
-                  contact@cheikhdistribution.com
+                  contact@cheikhdistribution.sn
                 </span>
               </a>
             </div>
@@ -221,9 +220,8 @@ export function Footer() {
             <div className="flex flex-wrap justify-center gap-x-6 gap-y-1 text-[12px] text-white/35">
               {[
                 { href: '/privacy', label: 'Confidentialité' },
-                { href: '/terms',   label: 'Conditions d\'utilisation' },
-                { href: '/cookies', label: 'Cookies' },
-                { href: '/sitemap', label: 'Plan du site' },
+                { href: '/terms',   label: 'Conditions générales' },
+                { href: '/faq',     label: 'FAQ' },
               ].map(({ href, label }) => (
                 <Link key={href} href={href} className="hover:text-white/70 transition-colors">
                   {label}

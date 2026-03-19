@@ -13,6 +13,17 @@ export type UserAddress = {
   country: string;
 };
 
+export type UserAddressEntry = {
+  _id: string;
+  label: string;
+  street: string;
+  city: string;
+  region?: string;
+  postalCode?: string;
+  country: string;
+  isDefault: boolean;
+};
+
 export type UserPreferences = {
   newsletter: boolean;
   smsNotifications: boolean;
@@ -28,6 +39,7 @@ export type UserResponse = {
   address?: UserAddress;
   avatar?: string | null;
   preferences: UserPreferences;
+  deliveryRating?: { average: number; count: number };
   createdAt: string;
   updatedAt: string;
 };

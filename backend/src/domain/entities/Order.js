@@ -48,6 +48,8 @@ class Order {
    * @param {object}           [props.notes]
    * @param {string}           [props.status]
    * @param {object[]}         [props.tracking]
+   * @param {string|null}      [props.couponCode]
+   * @param {number}           [props.discount]
    */
   constructor({
     id = null,
@@ -60,6 +62,8 @@ class Order {
     notes = {},
     status = 'pending',
     tracking = [],
+    couponCode = null,
+    discount = 0,
   }) {
     this.id            = id;
     this.orderNumber   = orderNumber;
@@ -71,10 +75,12 @@ class Order {
     this.notes         = notes;
     this.status        = status;
     this.tracking      = tracking;
+    this.couponCode    = couponCode;
+    this.discount      = discount;
 
     this.subtotal    = this._calculateSubtotal();
     this.deliveryFee = this._calculateDeliveryFee();
-    this.total       = this.subtotal + this.deliveryFee;
+    this.total       = this.subtotal - this.discount + this.deliveryFee;
   }
 
   // ── Calculations ──────────────────────────────────────────────────────────

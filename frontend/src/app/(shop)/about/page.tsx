@@ -288,7 +288,7 @@ export default function AboutPage() {
                   et les services.
                 </p>
                 <p className="text-lg mb-6">
-                  Nous offrons une large gamme de produits alimentaires, électroménagers, bétails, vêtements,
+                  Nous offrons une large gamme de produits alimentaires, électroménagers, bétail, vêtements,
                   articles de sport et plus encore, pour satisfaire les besoins des familles, des commerçants,
                   des professionnels et de la diaspora.
                 </p>

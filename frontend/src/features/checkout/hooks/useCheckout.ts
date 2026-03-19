@@ -49,7 +49,7 @@ export function useCheckout() {
     country: 'Sénégal',
   });
 
-  const submitOrder = async () => {
+  const submitOrder = async (couponCode?: string) => {
     if (!isAgreedToTerms) {
       toast.error('Veuillez accepter les conditions générales');
       return;
@@ -121,6 +121,7 @@ export function useCheckout() {
           email: user.email,
         },
         notes: customerNote ? { customer: customerNote } : undefined,
+        ...(couponCode ? { couponCode } : {}),
       };
 
       const result = await checkoutApi.createOrder(command);

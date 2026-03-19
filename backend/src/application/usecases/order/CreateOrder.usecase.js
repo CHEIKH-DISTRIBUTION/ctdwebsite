@@ -56,6 +56,7 @@ class CreateOrderUseCase {
     deliveryAddress,
     contactInfo,
     notes = {},
+    couponCode = null,
   }) {
     // ── 1. Guard: order must not be empty ───────────────────────────────────
     if (products.length === 0 && packs.length === 0) {
@@ -126,6 +127,48 @@ class CreateOrderUseCase {
     // ── 3. Reserve stock (all checks passed — commit atomically) ────────────
     await this.productRepository.reserveStock(stockReservations);
 
+    // ── 3b. Validate coupon (if provided) ────────────────────────────────────
+    let discount = 0;
+    let appliedCouponCode = null;
+
+    if (couponCode) {
+      const Coupon = require('../../../models/Coupon');
+      const subtotal = orderItems.reduce((sum, item) => sum + item.total, 0);
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+
+      if (coupon) {
+        const now = new Date();
+        const isValid =
+          now >= coupon.startDate &&
+          now <= coupon.endDate &&
+          (coupon.maxUses === null || coupon.usedCount < coupon.maxUses) &&
+          subtotal >= coupon.minOrderAmount;
+
+        if (isValid) {
+          const CouponOrder = require('../../../models/Order');
+          const userUses = await CouponOrder.countDocuments({
+            user: userId,
+            couponCode: coupon.code,
+            status: { $nin: ['cancelled'] },
+          });
+
+          if (!coupon.maxUsesPerUser || userUses < coupon.maxUsesPerUser) {
+            if (coupon.discountType === 'percentage') {
+              discount = Math.round(subtotal * coupon.discountValue / 100);
+              if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+                discount = coupon.maxDiscount;
+              }
+            } else {
+              discount = coupon.discountValue;
+            }
+            if (discount > subtotal) discount = subtotal;
+            appliedCouponCode = coupon.code;
+            await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } });
+          }
+        }
+      }
+    }
+
     // ── 4. Build domain entity ───────────────────────────────────────────────
     const orderNumber = await this.orderRepository.generateOrderNumber();
 
@@ -137,6 +180,8 @@ class CreateOrderUseCase {
       deliveryAddress,
       contactInfo,
       notes,
+      couponCode: appliedCouponCode,
+      discount,
     });
 
     order.addTrackingEntry(

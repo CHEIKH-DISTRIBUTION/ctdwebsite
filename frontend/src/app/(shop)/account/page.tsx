@@ -31,12 +31,16 @@ import {
   AlertTriangle,
   Lock,
   CheckCircle,
+  Plus,
+  Trash2,
 } from 'lucide-react';
 import Link from 'next/link';
 import { ordersApi } from '@/features/orders/api/orders.api';
 import { httpClient } from '@/shared/api/httpClient';
 import { useFavorites } from '@/features/favorites';
+import { authApi } from '@/features/auth/api/auth.api';
 import type { OrderResponse } from '@/shared/types/order.types';
+import type { UserAddressEntry } from '@/shared/types/user.types';
 
 const COLORS = {
   primary:   '#001489',
@@ -191,6 +195,44 @@ export default function AccountPage() {
   const handleLogout = () => {
     logout();
     router.push('/');
+  };
+
+  // ── Addresses ─────────────────────────────────────────────────────────────
+  const [addresses, setAddresses]       = useState<UserAddressEntry[]>([]);
+  const [addrLoading, setAddrLoading]   = useState(false);
+  const [showAddrForm, setShowAddrForm] = useState(false);
+  const [newAddr, setNewAddr]           = useState({ label: 'Domicile', street: '', city: 'Dakar', isDefault: false });
+
+  const loadAddresses = useCallback(async () => {
+    setAddrLoading(true);
+    try { setAddresses(await authApi.getAddresses()); } catch { /* ignore */ }
+    finally { setAddrLoading(false); }
+  }, []);
+
+  useEffect(() => { loadAddresses(); }, [loadAddresses]);
+
+  const handleAddAddress = async () => {
+    if (!newAddr.street.trim() || !newAddr.city.trim()) return;
+    try {
+      const updated = await authApi.addAddress({ ...newAddr, country: 'Sénégal' } as Omit<UserAddressEntry, '_id'>);
+      setAddresses(updated);
+      setShowAddrForm(false);
+      setNewAddr({ label: 'Domicile', street: '', city: 'Dakar', isDefault: false });
+    } catch { /* ignore */ }
+  };
+
+  const handleDeleteAddress = async (id: string) => {
+    try {
+      const updated = await authApi.deleteAddress(id);
+      setAddresses(updated);
+    } catch { /* ignore */ }
+  };
+
+  const handleSetDefaultAddress = async (id: string) => {
+    try {
+      const updated = await authApi.updateAddress(id, { isDefault: true });
+      setAddresses(updated);
+    } catch { /* ignore */ }
   };
 
   const handlePasswordChange = async () => {
@@ -449,6 +491,155 @@ export default function AccountPage() {
                           />
                         </div>
                       </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Addresses */}
+                  <Card className="border-gray-200 shadow-lg rounded-2xl mt-6">
+                    <CardHeader>
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                        <CardTitle className="text-gray-800 flex items-center gap-2">
+                          <MapPin className="h-5 w-5 flex-shrink-0" style={{ color: COLORS.primary }} />
+                          Mes adresses de livraison
+                        </CardTitle>
+                        <Button
+                          variant="outline"
+                          onClick={() => setShowAddrForm(!showAddrForm)}
+                          className="flex items-center gap-2 rounded-xl border-[#001489] text-[#001489] hover:bg-[#001489]/10 transition-all self-start sm:self-auto"
+                        >
+                          <Plus className="h-4 w-4" />
+                          Ajouter
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      {/* Add address form */}
+                      {showAddrForm && (
+                        <div className="border border-blue-200 bg-blue-50/50 rounded-xl p-4 space-y-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-sm text-gray-700">Libellé</Label>
+                              <Input
+                                value={newAddr.label}
+                                onChange={(e) => setNewAddr({ ...newAddr, label: e.target.value })}
+                                placeholder="Ex: Domicile, Bureau"
+                                className="rounded-xl border-gray-300 focus:border-[#001489]"
+                              />
+                            </div>
+                            <div className="space-y-1 sm:col-span-2">
+                              <Label className="text-sm text-gray-700">Rue / Quartier</Label>
+                              <Input
+                                value={newAddr.street}
+                                onChange={(e) => setNewAddr({ ...newAddr, street: e.target.value })}
+                                placeholder="Ex: Quartier Médina, Rue 10"
+                                className="rounded-xl border-gray-300 focus:border-[#001489]"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-sm text-gray-700">Ville</Label>
+                              <Input
+                                value={newAddr.city}
+                                onChange={(e) => setNewAddr({ ...newAddr, city: e.target.value })}
+                                placeholder="Ex: Dakar"
+                                className="rounded-xl border-gray-300 focus:border-[#001489]"
+                              />
+                            </div>
+                            <div className="flex items-end gap-3">
+                              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={newAddr.isDefault}
+                                  onChange={(e) => setNewAddr({ ...newAddr, isDefault: e.target.checked })}
+                                  className="rounded border-gray-300"
+                                />
+                                Adresse par défaut
+                              </label>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 pt-1">
+                            <Button
+                              onClick={handleAddAddress}
+                              className="rounded-xl transition-all hover:shadow-lg"
+                              style={{ backgroundColor: COLORS.primary }}
+                            >
+                              <Save className="h-4 w-4 mr-2" />
+                              Enregistrer
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => setShowAddrForm(false)}
+                              className="rounded-xl"
+                            >
+                              Annuler
+                            </Button>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Address list */}
+                      {addrLoading ? (
+                        <div className="flex items-center justify-center py-8 text-gray-400">
+                          <Loader2 className="h-6 w-6 animate-spin" />
+                        </div>
+                      ) : addresses.length === 0 ? (
+                        <div className="text-center py-8">
+                          <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                          <p className="text-gray-600 text-sm">
+                            Aucune adresse enregistrée. Ajoutez-en une pour accélérer vos commandes.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {addresses.map((addr) => (
+                            <div
+                              key={addr._id}
+                              className={`flex items-start justify-between gap-3 p-4 border rounded-xl transition-all ${
+                                addr.isDefault
+                                  ? 'border-[#001489] bg-blue-50/50'
+                                  : 'border-gray-200 hover:border-gray-300'
+                              }`}
+                            >
+                              <div className="flex items-start gap-3 min-w-0">
+                                <MapPin className="h-5 w-5 flex-shrink-0 mt-0.5 text-gray-400" />
+                                <div className="min-w-0">
+                                  <p className="font-medium text-gray-800 flex items-center gap-2">
+                                    {addr.label}
+                                    {addr.isDefault && (
+                                      <span className="text-xs px-2 py-0.5 rounded-full bg-[#001489] text-white">
+                                        Par défaut
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className="text-sm text-gray-600 truncate">
+                                    {addr.street}, {addr.city}
+                                    {addr.region ? `, ${addr.region}` : ''}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1 flex-shrink-0">
+                                {!addr.isDefault && (
+                                  <button
+                                    onClick={() => handleSetDefaultAddress(addr._id)}
+                                    className="text-xs text-[#001489] hover:underline px-2 py-1 rounded-lg hover:bg-blue-50 transition-colors"
+                                    title="Définir par défaut"
+                                  >
+                                    Par défaut
+                                  </button>
+                                )}
+                                <button
+                                  onClick={() => handleDeleteAddress(addr._id)}
+                                  className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors"
+                                  title="Supprimer"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </TabsContent>

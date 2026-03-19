@@ -1,5 +1,6 @@
 const express = require('express');
 const {
+  createUser,
   getAllUsers,
   getUser,
   updateUser,
@@ -15,6 +16,7 @@ const router = express.Router();
 // Toutes les routes protégées et réservées aux admins
 router.use(protect, authorize('admin'));
 
+router.post('/', createUser);
 router.get('/', getAllUsers);
 router.get('/:id', getUser);
 router.put('/:id', updateUser);

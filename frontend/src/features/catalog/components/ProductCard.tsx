@@ -189,6 +189,7 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
         onClick={handleToggleFavorite}
         className="absolute top-2.5 right-2.5 z-10 p-1.5 rounded-full bg-white/80 backdrop-blur-sm hover:bg-white transition-colors shadow-sm"
         title={liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
+        aria-label={liked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
       >
         <Heart className={`h-4 w-4 transition-colors ${liked ? 'fill-red-500 text-red-500' : 'text-gray-400'}`} />
       </button>

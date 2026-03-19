@@ -1,7 +1,7 @@
 // src/app/(shop)/checkout/page.tsx
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import type { ElementType } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCartStore } from '@/features/cart/store/cartStore';
@@ -22,9 +22,14 @@ import {
   AlertCircle,
   Wallet,
   ChevronRight,
+  Tag,
+  ChevronDown,
 } from 'lucide-react';
 import Image from 'next/image';
 import { useCheckout, type CheckoutPaymentMethod } from '@/features/checkout/hooks/useCheckout';
+import { checkoutApi, type CouponValidation } from '@/features/checkout/api/checkout.api';
+import { authApi } from '@/features/auth/api/auth.api';
+import type { UserAddressEntry } from '@/shared/types/user.types';
 
 /* ── Brand colours (Pantone) ── */
 const PRIMARY   = '#F9461C';   // Pantone 711 C
@@ -83,7 +88,7 @@ const inputCls =
 export default function CheckoutPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuthStore();
-  const { items, packItems, getItemCount } = useCartStore();
+  const { items, packItems, getItemCount, getEstimatedTotal } = useCartStore();
   const {
     paymentMethod,
     deliveryAddress,
@@ -96,6 +101,55 @@ export default function CheckoutPage() {
     setIsAgreedToTerms,
     submitOrder,
   } = useCheckout();
+
+  const [promoCode,       setPromoCode]       = useState('');
+  const [promoMessage,    setPromoMessage]    = useState<string | null>(null);
+  const [promoError,      setPromoError]      = useState(false);
+  const [appliedCoupon,   setAppliedCoupon]   = useState<CouponValidation | null>(null);
+  const [validatingPromo, setValidatingPromo] = useState(false);
+
+  // Saved addresses
+  const [savedAddresses, setSavedAddresses] = useState<UserAddressEntry[]>([]);
+  const [selectedAddrId, setSelectedAddrId] = useState<string>('');
+
+  const loadSavedAddresses = useCallback(async () => {
+    try {
+      const addrs = await authApi.getAddresses();
+      setSavedAddresses(addrs);
+      // Auto-select default address
+      const defaultAddr = addrs.find((a) => a.isDefault);
+      if (defaultAddr && !deliveryAddress.street.trim()) {
+        setSelectedAddrId(defaultAddr._id);
+        setDeliveryAddress({
+          street: defaultAddr.street,
+          city: defaultAddr.city,
+          region: defaultAddr.region ?? '',
+          instructions: '',
+        });
+      }
+    } catch { /* ignore — user can type manually */ }
+  }, [deliveryAddress.street, setDeliveryAddress]);
+
+  useEffect(() => {
+    if (isAuthenticated) loadSavedAddresses();
+  }, [isAuthenticated, loadSavedAddresses]);
+
+  const handleAddressSelect = (addrId: string) => {
+    setSelectedAddrId(addrId);
+    if (addrId === '') {
+      setDeliveryAddress({ street: '', city: '', region: '', instructions: '' });
+      return;
+    }
+    const addr = savedAddresses.find((a) => a._id === addrId);
+    if (addr) {
+      setDeliveryAddress({
+        street: addr.street,
+        city: addr.city,
+        region: addr.region ?? '',
+        instructions: deliveryAddress.instructions ?? '',
+      });
+    }
+  };
 
   // Redirect unauthenticated users before they fill the form
   useEffect(() => {
@@ -248,39 +302,84 @@ export default function CheckoutPage() {
                 </div>
                 Adresse de livraison
               </h2>
+
+              {/* Saved addresses dropdown */}
+              {savedAddresses.length > 0 && (
+                <div className="mb-4">
+                  <div className="relative">
+                    <label htmlFor="saved-address" className="sr-only">Adresse enregistrée</label>
+                    <select
+                      id="saved-address"
+                      value={selectedAddrId}
+                      onChange={(e) => handleAddressSelect(e.target.value)}
+                      className={inputCls + ' appearance-none pr-10 cursor-pointer'}
+                    >
+                      <option value="">Saisir une nouvelle adresse</option>
+                      {savedAddresses.map((addr) => (
+                        <option key={addr._id} value={addr._id}>
+                          {addr.label} — {addr.street}, {addr.city}
+                          {addr.isDefault ? ' (par défaut)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    Choisissez une adresse enregistrée ou saisissez-en une nouvelle
+                  </p>
+                </div>
+              )}
+
               <div className="space-y-3">
-                <input
-                  type="text"
-                  placeholder="Rue / Quartier *"
-                  required
-                  value={deliveryAddress.street}
-                  onChange={(e) => setDeliveryAddress({ ...deliveryAddress, street: e.target.value })}
-                  className={inputCls + (!deliveryAddress.street.trim() && isSubmitting ? ' !border-red-400 !ring-red-100' : '')}
-                />
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="addr-street" className="sr-only">Rue / Quartier</label>
                   <input
+                    id="addr-street"
                     type="text"
-                    placeholder="Ville *"
+                    placeholder="Rue / Quartier *"
                     required
-                    value={deliveryAddress.city}
-                    onChange={(e) => setDeliveryAddress({ ...deliveryAddress, city: e.target.value })}
-                    className={inputCls + (!deliveryAddress.city.trim() && isSubmitting ? ' !border-red-400 !ring-red-100' : '')}
+                    value={deliveryAddress.street}
+                    onChange={(e) => setDeliveryAddress({ ...deliveryAddress, street: e.target.value })}
+                    className={inputCls + (!deliveryAddress.street.trim() && isSubmitting ? ' !border-red-400 !ring-red-100' : '')}
                   />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="addr-city" className="sr-only">Ville</label>
+                    <input
+                      id="addr-city"
+                      type="text"
+                      placeholder="Ville *"
+                      required
+                      value={deliveryAddress.city}
+                      onChange={(e) => setDeliveryAddress({ ...deliveryAddress, city: e.target.value })}
+                      className={inputCls + (!deliveryAddress.city.trim() && isSubmitting ? ' !border-red-400 !ring-red-100' : '')}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="addr-region" className="sr-only">Région</label>
+                    <input
+                      id="addr-region"
+                      type="text"
+                      placeholder="Région"
+                      value={deliveryAddress.region ?? ''}
+                      onChange={(e) => setDeliveryAddress({ ...deliveryAddress, region: e.target.value })}
+                      className={inputCls}
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="addr-instructions" className="sr-only">Instructions de livraison</label>
                   <input
+                    id="addr-instructions"
                     type="text"
-                    placeholder="Région"
-                    value={deliveryAddress.region ?? ''}
-                    onChange={(e) => setDeliveryAddress({ ...deliveryAddress, region: e.target.value })}
+                    placeholder="Instructions de livraison (point de repère, étage…)"
+                    value={deliveryAddress.instructions ?? ''}
+                    onChange={(e) => setDeliveryAddress({ ...deliveryAddress, instructions: e.target.value })}
                     className={inputCls}
                   />
                 </div>
-                <input
-                  type="text"
-                  placeholder="Instructions de livraison (point de repère, étage…)"
-                  value={deliveryAddress.instructions ?? ''}
-                  onChange={(e) => setDeliveryAddress({ ...deliveryAddress, instructions: e.target.value })}
-                  className={inputCls}
-                />
               </div>
             </motion.section>
 
@@ -388,16 +487,103 @@ export default function CheckoutPage() {
               className="bg-white rounded-2xl p-6"
               style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.06)' }}
             >
-              <h2 className="text-base font-semibold text-gray-900 mb-4">
+              <label htmlFor="customer-note" className="text-base font-semibold text-gray-900 mb-4 block">
                 Note pour le livreur <span className="text-gray-400 font-normal text-sm">(optionnel)</span>
-              </h2>
+              </label>
               <textarea
+                id="customer-note"
                 rows={3}
                 placeholder="Instructions spéciales, point de repère, heure préférable…"
                 value={customerNote}
                 onChange={(e) => setCustomerNote(e.target.value)}
                 className={inputCls + ' resize-none'}
               />
+            </motion.section>
+
+            {/* ── Promo code ──────────────────────────────── */}
+            <motion.section
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.16 }}
+              className="bg-white rounded-2xl p-6"
+              style={{ boxShadow: '0 1px 4px rgba(0,0,0,0.06)', border: '1px solid rgba(0,0,0,0.06)' }}
+            >
+              <h2 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2.5">
+                <div
+                  className="w-8 h-8 rounded-lg flex items-center justify-center"
+                  style={{ background: `${ACCENT}20` }}
+                >
+                  <Tag className="h-4 w-4" style={{ color: '#B8860B' }} />
+                </div>
+                Code promo
+                <span className="text-xs font-normal text-gray-400">(optionnel)</span>
+              </h2>
+              <div className="flex gap-2">
+                <div className="flex-1">
+                  <label htmlFor="promo-code" className="sr-only">Code promo</label>
+                  <input
+                    id="promo-code"
+                    type="text"
+                    placeholder="Entrez votre code"
+                    value={promoCode}
+                    onChange={(e) => { setPromoCode(e.target.value.toUpperCase()); setPromoMessage(null); setPromoError(false); }}
+                    disabled={!!appliedCoupon}
+                    className={inputCls}
+                  />
+                </div>
+                {appliedCoupon ? (
+                  <button
+                    type="button"
+                    onClick={() => { setAppliedCoupon(null); setPromoCode(''); setPromoMessage(null); }}
+                    className="px-5 py-3 rounded-xl text-sm font-semibold transition-all text-red-600 border border-red-200 hover:bg-red-50"
+                  >
+                    Retirer
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    disabled={!promoCode.trim() || validatingPromo}
+                    onClick={async () => {
+                      setValidatingPromo(true);
+                      setPromoMessage(null);
+                      setPromoError(false);
+                      try {
+                        const result = await checkoutApi.validateCoupon(promoCode.trim(), getEstimatedTotal());
+                        setAppliedCoupon(result);
+                        setPromoMessage(
+                          result.discountType === 'percentage'
+                            ? `-${result.discountValue}% appliqué (${result.discount.toLocaleString('fr-FR')} FCFA)`
+                            : `-${result.discount.toLocaleString('fr-FR')} FCFA appliqué`
+                        );
+                      } catch (err: unknown) {
+                        const msg = err && typeof err === 'object' && 'message' in err
+                          ? (err as { message: string }).message
+                          : 'Code promo invalide';
+                        setPromoMessage(msg);
+                        setPromoError(true);
+                      } finally {
+                        setValidatingPromo(false);
+                      }
+                    }}
+                    className="px-5 py-3 rounded-xl text-sm font-semibold transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                    style={{
+                      background: promoCode.trim() ? SECONDARY : '#E5E7EB',
+                      color: promoCode.trim() ? '#fff' : '#9CA3AF',
+                    }}
+                  >
+                    {validatingPromo ? '...' : 'Appliquer'}
+                  </button>
+                )}
+              </div>
+              {promoMessage && (
+                <p className={`mt-2 text-xs flex items-center gap-1.5 ${promoError ? 'text-red-600' : 'text-green-600'}`}>
+                  {promoError
+                    ? <AlertCircle className="h-3.5 w-3.5 flex-shrink-0" />
+                    : <Check className="h-3.5 w-3.5 flex-shrink-0" />
+                  }
+                  {promoMessage}
+                </p>
+              )}
             </motion.section>
 
             {/* ── Terms ────────────────────────────────────── */}
@@ -527,6 +713,19 @@ export default function CheckoutPage() {
                 ))}
               </div>
 
+              {/* Coupon discount line */}
+              {appliedCoupon && (
+                <div className="flex justify-between items-center px-1 mb-3 text-sm">
+                  <span className="text-green-700 font-medium flex items-center gap-1.5">
+                    <Tag className="h-3.5 w-3.5" />
+                    Réduction ({appliedCoupon.code})
+                  </span>
+                  <span className="text-green-700 font-bold">
+                    -{appliedCoupon.discount.toLocaleString('fr-FR')} FCFA
+                  </span>
+                </div>
+              )}
+
               {/* Pricing note */}
               <div
                 className="mb-5 p-3 rounded-xl text-xs text-amber-700 flex items-start gap-2"
@@ -556,7 +755,7 @@ export default function CheckoutPage() {
 
               {/* ── Main CTA ─── */}
               <button
-                onClick={submitOrder}
+                onClick={() => submitOrder(appliedCoupon?.code)}
                 disabled={isSubmitting || !isAgreedToTerms}
                 className="w-full h-14 rounded-xl text-base font-bold text-white flex items-center justify-center gap-2 transition-all active:scale-[0.99] disabled:opacity-40 disabled:cursor-not-allowed"
                 style={{

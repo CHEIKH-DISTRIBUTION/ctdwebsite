@@ -20,6 +20,7 @@ const paymentRoutes = require('./routes/payments');
 const packRoutes    = require('./routes/packs');
 const offerRoutes     = require('./routes/offers');
 const favoritesRoutes = require('./routes/favorites');
+const couponRoutes    = require('./routes/coupons');
 
 // Importer les routes (v2 — DDD architecture)
 const ordersV2Routes = require('./interfaces/http/routes/orders');
@@ -97,6 +98,7 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/packs',    packRoutes);
 app.use('/api/offers',     offerRoutes);
 app.use('/api/favorites', favoritesRoutes);
+app.use('/api/coupons',   couponRoutes);
 
 // Routes API v2 (DDD architecture)
 app.use('/api/v2/orders', ordersV2Routes);

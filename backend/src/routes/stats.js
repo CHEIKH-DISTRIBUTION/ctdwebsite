@@ -217,4 +217,39 @@ router.get('/sales', protect, authorize('admin'), async (req, res) => {
   }
 });
 
+// @desc    Statistiques publiques (page d'accueil)
+// @route   GET /api/stats/public
+// @access  Public
+router.get('/public', async (req, res) => {
+  try {
+    const [totalProducts, totalOrders, reviews] = await Promise.all([
+      Product.countDocuments({ isActive: true }),
+      Order.countDocuments({ status: 'delivered' }),
+      require('../models/Review').find({ rating: { $gte: 4 } })
+        .sort({ createdAt: -1 })
+        .limit(6)
+        .populate('user', 'name')
+        .lean(),
+    ]);
+
+    res.status(200).json({
+      success: true,
+      data: {
+        totalProducts,
+        totalOrders,
+        reviews: reviews.map((r) => ({
+          _id: r._id,
+          rating: r.rating,
+          comment: r.comment,
+          userName: r.user?.name || 'Client',
+          createdAt: r.createdAt,
+        })),
+      },
+    });
+  } catch (error) {
+    console.error('Erreur statistiques publiques:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+});
+
 module.exports = router;

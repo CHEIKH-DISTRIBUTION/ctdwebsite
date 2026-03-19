@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { Truck, LogOut, Package, ChevronLeft } from 'lucide-react';
+import { Truck, LogOut, Package, ChevronLeft, Settings } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 
 export default function DeliveryLayout({ children }: { children: React.ReactNode }) {
@@ -83,6 +83,14 @@ export default function DeliveryLayout({ children }: { children: React.ReactNode
           >
             <Package className="h-4 w-4" />
             Commandes
+          </Link>
+
+          <Link
+            href="/delivery/settings"
+            className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-[#001489] transition-colors px-2 py-1 rounded-lg hover:bg-gray-100"
+          >
+            <Settings className="h-4 w-4" />
+            <span className="hidden sm:inline">Paramètres</span>
           </Link>
 
           {/* Logout */}

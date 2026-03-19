@@ -5,6 +5,23 @@ import type { OfferResponse } from '@/shared/types/offer.types';
 import type { PackResponse, PackCategory } from '@/shared/types/pack.types';
 import type { UserResponse, UserRole } from '@/shared/types/user.types';
 
+export type CouponResponse = {
+  _id: string;
+  code: string;
+  description: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  maxDiscount: number | null;
+  minOrderAmount: number;
+  startDate: string;
+  endDate: string;
+  maxUses: number | null;
+  usedCount: number;
+  maxUsesPerUser: number;
+  isActive: boolean;
+  createdAt: string;
+};
+
 type PaginatedUsers = {
   users: UserResponse[];
   pagination: { current: number; pages: number; total: number; limit: number };
@@ -101,6 +118,10 @@ export const adminApi = {
 
   // ── Users ─────────────────────────────────────────────────────────────────
 
+  /** POST /api/users — create user (admin) */
+  createUser: (data: { name: string; email: string; password: string; phone?: string; role: UserRole }) =>
+    httpClient.post<UserResponse>('/api/users', data),
+
   /** GET /api/users — admin list with pagination + filters */
   getUsers: (params?: { page?: number; limit?: number; role?: string; isActive?: boolean }) => {
     const qs = new URLSearchParams();
@@ -169,4 +190,22 @@ export const adminApi = {
   /** DELETE /api/packs/:id */
   deletePack: (id: string) =>
     httpClient.delete<{ message: string }>(`/api/packs/${id}`),
+
+  // ── Coupons ──────────────────────────────────────────────────────────────
+
+  /** GET /api/coupons */
+  getCoupons: () =>
+    httpClient.get<CouponResponse[]>('/api/coupons'),
+
+  /** POST /api/coupons */
+  createCoupon: (data: Partial<CouponResponse>) =>
+    httpClient.post<CouponResponse>('/api/coupons', data),
+
+  /** PUT /api/coupons/:id */
+  updateCoupon: (id: string, data: Partial<CouponResponse>) =>
+    httpClient.put<CouponResponse>(`/api/coupons/${id}`, data),
+
+  /** DELETE /api/coupons/:id */
+  deleteCoupon: (id: string) =>
+    httpClient.delete<{ message: string }>(`/api/coupons/${id}`),
 };

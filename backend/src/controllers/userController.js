@@ -1,5 +1,37 @@
 const User = require('../models/User');
 
+// @desc    Créer un utilisateur (Admin — surtout pour les livreurs)
+// @route   POST /api/users
+// @access  Private/Admin
+exports.createUser = async (req, res) => {
+  try {
+    const { name, email, password, phone, role } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ success: false, message: 'Nom, email et mot de passe requis' });
+    }
+    if (!['customer', 'delivery', 'admin'].includes(role)) {
+      return res.status(400).json({ success: false, message: 'Rôle invalide' });
+    }
+
+    const exists = await User.findOne({ email: email.toLowerCase() });
+    if (exists) {
+      return res.status(400).json({ success: false, message: 'Cet email est déjà utilisé' });
+    }
+
+    const user = await User.create({ name, email, password, phone: phone || '', role });
+
+    res.status(201).json({
+      success: true,
+      message: 'Utilisateur créé avec succès',
+      data: user,
+    });
+  } catch (error) {
+    console.error('Erreur création utilisateur:', error);
+    res.status(500).json({ success: false, message: 'Erreur serveur' });
+  }
+};
+
 // @desc    Récupérer tous les utilisateurs (Admin)
 // @route   GET /api/users
 // @access  Private/Admin

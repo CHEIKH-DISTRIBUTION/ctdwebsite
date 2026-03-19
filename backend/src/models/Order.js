@@ -83,6 +83,8 @@ const orderSchema = new mongoose.Schema({
     updatedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User' }
   }],
   rating: ratingSchema,
+  couponCode: { type: String, default: null },
+  discount: { type: Number, default: 0, min: 0 },
 }, {
   timestamps: true
 });

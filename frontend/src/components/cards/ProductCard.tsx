@@ -124,7 +124,7 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
                     borderColor: isLiked ? PRIMARY : 'rgba(0,0,0,0.12)',
                     color: isLiked ? PRIMARY : '#9CA3AF',
                   }}
-                  aria-label="Favori"
+                  aria-label={isLiked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
                 >
                   <Heart className={`h-4 w-4 ${isLiked ? 'fill-current' : ''}`} />
                 </button>
@@ -179,7 +179,7 @@ export function ProductCard({ product, viewMode = 'grid' }: ProductCardProps) {
                    flex items-center justify-center shadow-sm
                    opacity-0 group-hover:opacity-100 transition-opacity hover:scale-110 active:scale-95"
         style={{ color: isLiked ? PRIMARY : '#9CA3AF', border: `1px solid ${isLiked ? PRIMARY + '40' : 'rgba(0,0,0,0.10)'}` }}
-        aria-label="Favori"
+        aria-label={isLiked ? 'Retirer des favoris' : 'Ajouter aux favoris'}
       >
         <Heart className={`h-3.5 w-3.5 ${isLiked ? 'fill-current' : ''}`} />
       </button>

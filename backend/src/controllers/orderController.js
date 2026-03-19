@@ -4,6 +4,7 @@ const Product = require('../models/Product');
 const Pack = require('../models/Pack');
 const User = require('../models/User');
 const emailService = require('../infrastructure/email/emailService');
+const smsService   = require('../infrastructure/sms/smsService');
 
 // @desc    Créer une commande (produits et/ou packs)
 // @route   POST /api/orders
@@ -18,10 +19,11 @@ const emailService = require('../infrastructure/email/emailService');
 exports.createOrder = async (req, res) => {
   const session = await mongoose.startSession();
   let createdOrder;
+  let lowStockProducts;
 
   try {
     await session.withTransaction(async () => {
-      const { products = [], packs = [], paymentMethod, deliveryAddress, contactInfo, notes } = req.body;
+      const { products = [], packs = [], paymentMethod, deliveryAddress, contactInfo, notes, couponCode } = req.body;
 
       if (products.length === 0 && packs.length === 0) {
         const err = new Error('La commande doit contenir au moins un produit ou un pack');
@@ -111,11 +113,67 @@ exports.createOrder = async (req, res) => {
           err.httpStatus = 400;
           throw err;
         }
+
+        // Track products that fell below their minStock threshold
+        if (updated.stock <= updated.minStock) {
+          if (!lowStockProducts) lowStockProducts = [];
+          lowStockProducts.push({
+            _id: updated._id,
+            name: updated.name,
+            stock: updated.stock,
+            minStock: updated.minStock,
+          });
+        }
       }
 
-      // ── Phase 3: Persist order (inside same transaction) ─────────────────
+      // ── Phase 3: Coupon validation (if provided) ──────────────────────────
+      let discount = 0;
+      let appliedCouponCode = null;
+
+      if (couponCode) {
+        const Coupon = require('../models/Coupon');
+        const coupon = await Coupon.findOne({ code: couponCode.toUpperCase(), isActive: true });
+
+        if (coupon) {
+          const now = new Date();
+          const isValid =
+            now >= coupon.startDate &&
+            now <= coupon.endDate &&
+            (coupon.maxUses === null || coupon.usedCount < coupon.maxUses) &&
+            subtotal >= coupon.minOrderAmount;
+
+          if (isValid) {
+            // Check per-user limit
+            const userUses = await Order.countDocuments({
+              user: req.user.id,
+              couponCode: coupon.code,
+              status: { $nin: ['cancelled'] },
+            }).session(session);
+
+            if (!coupon.maxUsesPerUser || userUses < coupon.maxUsesPerUser) {
+              if (coupon.discountType === 'percentage') {
+                discount = Math.round(subtotal * coupon.discountValue / 100);
+                if (coupon.maxDiscount && discount > coupon.maxDiscount) {
+                  discount = coupon.maxDiscount;
+                }
+              } else {
+                discount = coupon.discountValue;
+              }
+              // Don't let discount exceed subtotal
+              if (discount > subtotal) discount = subtotal;
+              appliedCouponCode = coupon.code;
+
+              // Increment usage counter
+              await Coupon.findByIdAndUpdate(coupon._id, { $inc: { usedCount: 1 } }, { session });
+            }
+          }
+        }
+        // If coupon is invalid, we silently ignore it (no error, just no discount)
+      }
+
+      // ── Phase 4: Persist order (inside same transaction) ─────────────────
       const deliveryFee = subtotal >= 50000 ? 0 : 2000;
-      const total = subtotal + deliveryFee;
+      const total = subtotal - discount + deliveryFee;
 
       // Order.create() with a session requires the array-of-docs form.
       const [order] = await Order.create(
@@ -124,6 +182,8 @@ exports.createOrder = async (req, res) => {
           items: orderItems,
           subtotal,
           deliveryFee,
+          discount,
+          couponCode: appliedCouponCode,
           total,
           paymentMethod,
           deliveryAddress,
@@ -147,6 +207,17 @@ exports.createOrder = async (req, res) => {
       { path: 'items.pack', select: 'name price' },
       { path: 'user', select: 'name email phone' }
     ]);
+
+    // Fire-and-forget low-stock alert email
+    if (lowStockProducts && lowStockProducts.length > 0) {
+      emailService.sendLowStockAlert(lowStockProducts).catch(() => {});
+    }
+
+    // Send order confirmation SMS (fire-and-forget)
+    const smsUser = await User.findById(req.user.id).select('phone preferences').lean();
+    if (smsUser) {
+      smsService.sendOrderConfirmationSMS(smsUser, createdOrder).catch(() => {});
+    }
 
     return res.status(201).json({
       success: true,
@@ -375,6 +446,12 @@ exports.updateOrderStatus = async (req, res) => {
       }
     }
 
+    // Send SMS notification (fire-and-forget)
+    const orderUser = await User.findById(order.user).select('phone preferences').lean();
+    if (orderUser) {
+      smsService.sendOrderStatusSMS(orderUser, order).catch(() => {});
+    }
+
     res.status(200).json({
       success: true,
       message: 'Statut de la commande mis à jour',
@@ -430,7 +507,7 @@ exports.rateOrder = async (req, res) => {
       });
     }
 
-    // Ajouter la note
+    // Ajouter la note sur la commande
     order.rating = {
       delivery,
       overall,
@@ -439,6 +516,19 @@ exports.rateOrder = async (req, res) => {
     };
 
     await order.save();
+
+    // Propager la note sur le profil du livreur (moyenne incrémentale)
+    if (order.deliveryPerson && delivery) {
+      const User = require('../models/User');
+      const driver = await User.findById(order.deliveryPerson);
+      if (driver) {
+        const prev   = driver.deliveryRating || { average: 0, count: 0 };
+        const count  = prev.count + 1;
+        const avg    = ((prev.average * prev.count) + delivery) / count;
+        driver.deliveryRating = { average: Math.round(avg * 10) / 10, count };
+        await driver.save();
+      }
+    }
 
     res.status(200).json({
       success: true,

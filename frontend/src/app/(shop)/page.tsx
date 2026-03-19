@@ -22,8 +22,15 @@ import {
 import { motion } from 'framer-motion';
 import type { Variants } from 'framer-motion';
 import { catalogApi } from '@/features/catalog/api/catalog.api';
+import { httpClient } from '@/shared/api/httpClient';
 import type { ProductResponse } from '@/shared/types/product.types';
 import type { PackResponse } from '@/shared/types/pack.types';
+
+type PublicStats = {
+  totalProducts: number;
+  totalOrders: number;
+  reviews: { _id: string; rating: number; comment?: string; userName: string; createdAt: string }[];
+};
 
 // ---------------------------------------------------------------------------
 // Animation helpers
@@ -229,6 +236,13 @@ export default function HomePage() {
   const [packsLoading,     setPacksLoading]     = useState(true);
   const [productsError,    setProductsError]    = useState(false);
   const [packsError,       setPacksError]       = useState(false);
+  const [publicStats,      setPublicStats]      = useState<PublicStats | null>(null);
+
+  useEffect(() => {
+    httpClient.get<PublicStats>('/api/stats/public')
+      .then(setPublicStats)
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     catalogApi.getProducts({ featured: true, limit: 4, inStock: true })
@@ -468,8 +482,8 @@ export default function HomePage() {
             className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center"
           >
             {[
-              { value: '10K+', label: 'Clients Satisfaits',   icon: <Users className="h-8 w-8" /> },
-              { value: '500+', label: 'Produits Disponibles', icon: <ShoppingBag className="h-8 w-8" /> },
+              { value: publicStats ? `${publicStats.totalOrders.toLocaleString('fr-FR')}+` : '—', label: 'Commandes Livrées',   icon: <Users className="h-8 w-8" /> },
+              { value: publicStats ? `${publicStats.totalProducts.toLocaleString('fr-FR')}+` : '—', label: 'Produits Disponibles', icon: <ShoppingBag className="h-8 w-8" /> },
               { value: '24h',  label: 'Livraison Express',    icon: <Truck className="h-8 w-8" /> },
               { value: '98%',  label: 'Satisfaction Client',  icon: <Star className="h-8 w-8" /> },
             ].map((stat, index) => (
@@ -515,11 +529,19 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
           >
-            {[
-              { name: "Aïcha D.",   role: 'Client fidèle', content: "Service exceptionnel et livraison toujours à l'heure. Je recommande vivement !", rating: 5 },
-              { name: 'Mamadou S.', role: 'Commerçant',    content: 'Des produits de qualité et des prix compétitifs. Parfait pour mon commerce.',     rating: 5 },
-              { name: 'Sophie T.',  role: 'Particulier',   content: 'Application facile à utiliser et support client très réactif. Excellent !',         rating: 5 },
-            ].map((t, index) => (
+            {(publicStats && publicStats.reviews.length >= 3
+              ? publicStats.reviews.slice(0, 3).map((r) => ({
+                  name: r.userName,
+                  role: 'Client vérifié',
+                  content: r.comment || 'Très satisfait de mon achat !',
+                  rating: r.rating,
+                }))
+              : [
+                  { name: "Aïcha D.",   role: 'Client fidèle', content: "Service exceptionnel et livraison toujours à l'heure. Je recommande vivement !", rating: 5 },
+                  { name: 'Mamadou S.', role: 'Commerçant',    content: 'Des produits de qualité et des prix compétitifs. Parfait pour mon commerce.',     rating: 5 },
+                  { name: 'Sophie T.',  role: 'Particulier',   content: 'Application facile à utiliser et support client très réactif. Excellent !',         rating: 5 },
+                ]
+            ).map((t, index) => (
               <motion.div
                 key={index}
                 variants={fadeIn('up', 'spring', index * 0.1, 1)}

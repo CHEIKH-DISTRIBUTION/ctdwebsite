@@ -119,7 +119,7 @@ export default function PrivacyPage() {
             <p className="text-gray-600 leading-relaxed">
               Pour toute question relative à la protection de vos données,
               contactez-nous par email à contact@cheikhdistribution.sn
-              ou par téléphone au +221 78 XXX XX XX.
+              ou par téléphone au +221 77 649 06 34.
             </p>
           </section>
         </div>

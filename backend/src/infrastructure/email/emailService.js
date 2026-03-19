@@ -262,4 +262,57 @@ async function sendPasswordResetEmail(email, resetToken) {
   }
 }
 
-module.exports = { sendOrderConfirmation, sendPasswordResetEmail };
+/**
+ * Send a low-stock alert email to admin(s).
+ * @param {{ name: string, stock: number, minStock: number, _id: string }[]} products
+ */
+async function sendLowStockAlert(products) {
+  if (!products.length) return;
+
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@cheikhdistribution.sn';
+  const subject    = `⚠️ Alerte stock bas — ${products.length} produit${products.length > 1 ? 's' : ''} — Cheikh Distribution`;
+
+  const rows = products
+    .map(
+      (p) => `<tr>
+        <td style="padding:8px;border-bottom:1px solid #eee;">${p.name}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;color:#dc2626;font-weight:bold;">${p.stock}</td>
+        <td style="padding:8px;border-bottom:1px solid #eee;text-align:center;">${p.minStock}</td>
+      </tr>`
+    )
+    .join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"></head>
+<body style="font-family:Arial,sans-serif;background:#f4f4f4;padding:24px;">
+  <div style="max-width:560px;margin:auto;background:#fff;border-radius:8px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,.08);">
+    <h2 style="color:#dc2626;margin-top:0;">⚠️ Alerte de stock bas</h2>
+    <p>Les produits suivants ont un stock inférieur ou égal à leur seuil minimum :</p>
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
+      <thead>
+        <tr style="background:#fef2f2;">
+          <th style="padding:8px;text-align:left;color:#555;font-size:13px;">Produit</th>
+          <th style="padding:8px;text-align:center;color:#555;font-size:13px;">Stock actuel</th>
+          <th style="padding:8px;text-align:center;color:#555;font-size:13px;">Seuil min.</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <p>Connectez-vous au <a href="${process.env.CLIENT_URL ?? 'http://localhost:3000'}/admin/stock" style="color:#001489;font-weight:bold;">tableau de bord</a> pour gérer le réapprovisionnement.</p>
+    <p style="color:#aaa;font-size:12px;border-top:1px solid #eee;padding-top:16px;margin-bottom:0;">
+      © ${new Date().getFullYear()} Cheikh Distribution · Dakar, Sénégal
+    </p>
+  </div>
+</body>
+</html>`;
+
+  try {
+    await sendMail(adminEmail, subject, html);
+    console.log(`[emailService] Alerte stock bas envoyée à ${adminEmail}`);
+  } catch (err) {
+    console.error(`[emailService] Erreur envoi alerte stock:`, err.message);
+  }
+}
+
+module.exports = { sendOrderConfirmation, sendPasswordResetEmail, sendLowStockAlert };

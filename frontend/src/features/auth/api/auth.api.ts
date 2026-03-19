@@ -1,5 +1,5 @@
 import { httpClient } from '@/shared/api/httpClient';
-import type { AuthResponse, LoginPayload, RegisterPayload, UserResponse } from '@/shared/types/user.types';
+import type { AuthResponse, LoginPayload, RegisterPayload, UserResponse, UserAddressEntry } from '@/shared/types/user.types';
 
 /** Augmented payloads include the optional Cloudflare Turnstile token. */
 type WithCaptcha<T> = T & { 'cf-turnstile-response'?: string };
@@ -24,4 +24,22 @@ export const authApi = {
   /** POST /api/auth/facebook — verify Facebook access_token, return JWT */
   facebookAuth: (accessToken: string) =>
     httpClient.post<AuthResponse>('/api/auth/facebook', { accessToken }),
+
+  // ── Addresses ────────────────────────────────────────────────────────────
+
+  /** GET /api/auth/addresses */
+  getAddresses: () =>
+    httpClient.get<UserAddressEntry[]>('/api/auth/addresses'),
+
+  /** POST /api/auth/addresses */
+  addAddress: (data: Omit<UserAddressEntry, '_id'>) =>
+    httpClient.post<UserAddressEntry[]>('/api/auth/addresses', data),
+
+  /** PUT /api/auth/addresses/:id */
+  updateAddress: (id: string, data: Partial<UserAddressEntry>) =>
+    httpClient.put<UserAddressEntry[]>(`/api/auth/addresses/${id}`, data),
+
+  /** DELETE /api/auth/addresses/:id */
+  deleteAddress: (id: string) =>
+    httpClient.delete<UserAddressEntry[]>(`/api/auth/addresses/${id}`),
 };

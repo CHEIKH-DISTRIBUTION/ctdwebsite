@@ -7,6 +7,7 @@
  * Brand colours: PRIMARY #F9461C · SECONDARY #001489
  */
 
+import { useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ShoppingBag, Plus, Minus, Trash2, ArrowRight, Truck, Package } from 'lucide-react';
 import Link from 'next/link';
@@ -37,6 +38,23 @@ export function CartDrawer() {
   const total     = getEstimatedTotal();
   const itemCount = getItemCount();
   const remaining = Math.max(0, 50_000 - total);
+
+  // Escape key closes drawer
+  const handleKeyDown = useCallback(
+    (e: KeyboardEvent) => { if (e.key === 'Escape') closeDrawer(); },
+    [closeDrawer],
+  );
+
+  useEffect(() => {
+    if (!isDrawerOpen) return;
+    document.addEventListener('keydown', handleKeyDown);
+    // Prevent body scroll while drawer is open
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isDrawerOpen, handleKeyDown]);
 
   return (
     <AnimatePresence>

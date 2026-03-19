@@ -28,7 +28,7 @@ class OrderController {
    */
   static async createOrder(req, res) {
     try {
-      const { products, packs, paymentMethod, deliveryAddress, contactInfo, notes } = req.body;
+      const { products, packs, paymentMethod, deliveryAddress, contactInfo, notes, couponCode } = req.body;
 
       const useCase = new CreateOrderUseCase({
         orderRepository,
@@ -44,6 +44,7 @@ class OrderController {
         deliveryAddress,
         contactInfo,
         notes,
+        couponCode,
       });
 
       return res.status(201).json({

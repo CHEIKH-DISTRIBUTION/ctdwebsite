@@ -57,7 +57,7 @@ export default function OrdersPage() {
             </div>
             <h1 className="text-2xl font-bold text-gray-800 mb-3">Aucune commande</h1>
             <p className="text-gray-600 mb-6">Vous n&apos;avez pas encore passé de commande.</p>
-            <Button asChild className="bg-[#284bcc] hover:bg-[#1d3aa3]">
+            <Button asChild className="bg-[#001489] hover:bg-[#001070]">
               <Link href="/products" className="flex items-center gap-2">
                 <Package className="h-5 w-5" />
                 Découvrir nos produits
@@ -79,7 +79,7 @@ export default function OrdersPage() {
               <h1 className="text-3xl font-bold text-gray-800 mb-2">Mes commandes</h1>
               <p className="text-gray-600">Suivez l&apos;état de vos commandes passées</p>
             </div>
-            <Button asChild variant="outline" className="border-[#284bcc] text-[#284bcc] hover:bg-blue-50">
+            <Button asChild variant="outline" className="border-[#001489] text-[#001489] hover:bg-blue-50">
               <Link href="/products" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Continuer mes achats
@@ -101,7 +101,7 @@ export default function OrdersPage() {
             aria-label="Filtrer par statut"
             value={statusFilter ?? ''}
             onChange={(e) => filterByStatus((e.target.value as OrderStatus) || undefined)}
-            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#284bcc] w-full sm:w-auto"
+            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-[#001489] w-full sm:w-auto"
           >
             {STATUS_OPTIONS.map((opt) => (
               <option key={opt.value ?? 'all'} value={opt.value ?? ''}>
@@ -132,7 +132,7 @@ export default function OrdersPage() {
         {/* Loading */}
         {isLoading && (
           <div className="flex justify-center py-24">
-            <Loader2 className="h-10 w-10 animate-spin text-[#284bcc]" />
+            <Loader2 className="h-10 w-10 animate-spin text-[#001489]" />
           </div>
         )}
 
@@ -193,7 +193,7 @@ export default function OrdersPage() {
                     key={p}
                     onClick={() => setPage(p)}
                     variant={page === p ? 'default' : 'outline'}
-                    className={`w-10 h-10 p-0 ${page === p ? 'bg-[#284bcc] text-white' : ''}`}
+                    className={`w-10 h-10 p-0 ${page === p ? 'bg-[#001489] text-white' : ''}`}
                   >
                     {p}
                   </Button>

@@ -9,7 +9,7 @@ import { toast } from 'sonner';
 import Link from 'next/link';
 import { adminApi } from '@/features/admin/api/admin.api';
 import type { OrderResponse, OrderStatus } from '@/shared/types/order.types';
-import { AlertTriangle, Loader2, ChevronLeft, ChevronRight, Eye, Search, X } from 'lucide-react';
+import { AlertTriangle, Loader2, ChevronLeft, ChevronRight, Eye, Search, X, Download } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 
 const LIMIT = 20;
@@ -94,6 +94,38 @@ export default function AdminOrdersPage() {
     }
   };
 
+  const exportCSV = () => {
+    const rows = filteredOrders.map((o) => ({
+      'N° Commande': o.orderNumber,
+      Client: o.user?.name ?? '',
+      Téléphone: o.user?.phone ?? '',
+      Statut: STATUS_LABELS[o.status],
+      Paiement: o.paymentMethod,
+      'Sous-total': o.subtotal,
+      Livraison: o.deliveryFee,
+      Réduction: o.discount ?? 0,
+      Total: o.total,
+      Date: format(new Date(o.createdAt), 'dd/MM/yyyy HH:mm', { locale: fr }),
+    }));
+
+    if (rows.length === 0) { toast.error('Aucune commande à exporter'); return; }
+
+    const headers = Object.keys(rows[0]);
+    const csv = [
+      headers.join(';'),
+      ...rows.map((r) => headers.map((h) => `"${String(r[h as keyof typeof r]).replace(/"/g, '""')}"`).join(';')),
+    ].join('\n');
+
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `commandes-${format(new Date(), 'yyyy-MM-dd')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success(`${rows.length} commande${rows.length > 1 ? 's' : ''} exportée${rows.length > 1 ? 's' : ''}`);
+  };
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Header */}
@@ -108,19 +140,27 @@ export default function AdminOrdersPage() {
             )}
           </div>
 
-          {/* Status filter */}
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value as OrderStatus | ''); setPage(1); }}
-            className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white
-                       focus:outline-none focus:border-[#001489] focus:ring-2 focus:ring-[#001489]/15
-                       transition-all cursor-pointer"
-          >
-            <option value="">Tous les statuts</option>
-            {(Object.keys(STATUS_LABELS) as OrderStatus[]).map((s) => (
-              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-            ))}
-          </select>
+          <div className="flex items-center gap-2">
+            {/* Status filter */}
+            <select
+              value={statusFilter}
+              onChange={(e) => { setStatusFilter(e.target.value as OrderStatus | ''); setPage(1); }}
+              className="border border-gray-200 rounded-xl px-3 py-2.5 text-sm bg-white
+                         focus:outline-none focus:border-[#001489] focus:ring-2 focus:ring-[#001489]/15
+                         transition-all cursor-pointer"
+            >
+              <option value="">Tous les statuts</option>
+              {(Object.keys(STATUS_LABELS) as OrderStatus[]).map((s) => (
+                <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+              ))}
+            </select>
+
+            {/* CSV Export */}
+            <Button variant="outline" size="sm" onClick={exportCSV} disabled={loading || filteredOrders.length === 0}>
+              <Download className="h-4 w-4 mr-1.5" />
+              CSV
+            </Button>
+          </div>
         </div>
 
         {/* Search bar */}

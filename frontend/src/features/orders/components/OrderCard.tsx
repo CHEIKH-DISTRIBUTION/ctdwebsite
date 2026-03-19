@@ -44,7 +44,7 @@ export function OrderCard({ order }: OrderCardProps) {
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div>
             <h3 className="text-lg font-semibold text-gray-800">
-              Commande <span className="text-[#284bcc]">#{order.orderNumber}</span>
+              Commande <span className="text-[#001489]">#{order.orderNumber}</span>
             </h3>
             <p className="text-sm text-gray-500">Passée le {formatDate(order.createdAt)}</p>
           </div>

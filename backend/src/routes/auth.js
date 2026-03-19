@@ -14,6 +14,10 @@ const {
   resetPassword,
   googleAuth,
   facebookAuth,
+  getAddresses,
+  addAddress,
+  updateAddress,
+  deleteAddress,
 } = require('../controllers/authController');
 const { protect }              = require('../middleware/auth');
 const { verifyCaptcha }        = require('../middleware/captcha');
@@ -73,5 +77,11 @@ router.get('/me',              protect, getMe);
 router.get('/profile',         protect, getMe);
 router.put('/profile',         protect, updateMe);
 router.put('/change-password', protect, updatePassword);
+
+// Multiple addresses
+router.get('/addresses',              protect, getAddresses);
+router.post('/addresses',             protect, addAddress);
+router.put('/addresses/:addressId',   protect, updateAddress);
+router.delete('/addresses/:addressId', protect, deleteAddress);
 
 module.exports = router;

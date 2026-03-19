@@ -9,9 +9,9 @@ import { Label }   from '@/components/ui/label';
 import { toast }   from 'sonner';
 import { Mail, ArrowLeft, Shield, CheckCircle } from 'lucide-react';
 import { TurnstileWidget } from '@/features/auth/components/TurnstileWidget';
+import { httpClient } from '@/shared/api/httpClient';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:5000';
-const PRIMARY  = '#284bcc';
+const PRIMARY = '#001489';
 
 export default function ForgotPasswordPage() {
   const [email,          setEmail]          = useState('');
@@ -27,14 +27,10 @@ export default function ForgotPasswordPage() {
     }
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
-        method:      'POST',
-        credentials: 'include',
-        headers:     { 'Content-Type': 'application/json' },
-        body:        JSON.stringify({ email, 'cf-turnstile-response': turnstileToken }),
+      await httpClient.post('/api/auth/forgot-password', {
+        email,
+        'cf-turnstile-response': turnstileToken,
       });
-      const body = await res.json();
-      if (!res.ok && !body.success) throw new Error(body.message);
       setSent(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Erreur lors de la demande');
@@ -109,7 +105,7 @@ export default function ForgotPasswordPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="pl-10 py-3 border-gray-300 focus:border-blue-500"
+                    className="pl-10 py-3 border-gray-300 focus:border-[#001489]"
                     placeholder="votre@email.com"
                   />
                 </div>

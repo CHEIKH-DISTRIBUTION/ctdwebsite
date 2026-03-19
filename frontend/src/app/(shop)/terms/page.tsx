@@ -83,7 +83,7 @@ export default function TermsPage() {
             <h2 className="text-xl font-semibold text-gray-800 mb-3">7. Réclamations</h2>
             <p className="text-gray-600 leading-relaxed">
               Pour toute réclamation, contactez-nous par email à contact@cheikhdistribution.sn
-              ou par téléphone au +221 78 XXX XX XX. Nous nous engageons à traiter
+              ou par téléphone au +221 77 649 06 34. Nous nous engageons à traiter
               votre demande dans un délai de 48 heures ouvrées.
             </p>
           </section>

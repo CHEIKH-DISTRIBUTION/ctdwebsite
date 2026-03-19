@@ -33,6 +33,15 @@ type InitiatePaymentResult = {
   nextAction?: string; // Payment URL returned by Wave / Orange Money
 };
 
+export type CouponValidation = {
+  code: string;
+  description: string;
+  discountType: 'percentage' | 'fixed';
+  discountValue: number;
+  maxDiscount: number | null;
+  discount: number; // calculated discount for the given subtotal
+};
+
 export const checkoutApi = {
   /**
    * Submit a new order to the DDD backend endpoint.
@@ -61,4 +70,10 @@ export const checkoutApi = {
    */
   getPaymentStatus: (paymentId: string): Promise<PaymentRecord> =>
     httpClient.get<PaymentRecord>(`/api/payments/${paymentId}/status`),
+
+  /**
+   * Validate a coupon code and get the discount amount.
+   */
+  validateCoupon: (code: string, subtotal: number): Promise<CouponValidation> =>
+    httpClient.post<CouponValidation>('/api/coupons/validate', { code, subtotal }),
 };
