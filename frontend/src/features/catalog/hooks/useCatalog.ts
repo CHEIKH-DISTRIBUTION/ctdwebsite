@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { catalogApi } from '../api/catalog.api';
 import { useDebounce } from '@/shared/hooks/useDebounce';
 import type { ProductResponse, ProductCategory, ProductListParams } from '@/shared/types/product.types';
@@ -26,14 +27,27 @@ type Pagination = {
  *
  * Handles fetching, filtering, searching, and pagination.
  * Pages stay thin by delegating all catalog logic here.
+ * Reads `?q=` from the URL to support search from the Header bar.
  */
 export function useCatalog(initialLimit = 12) {
+  const searchParams = useSearchParams();
+  const urlQuery = searchParams.get('q') ?? '';
+
   const [products, setProducts]       = useState<ProductResponse[]>([]);
   const [pagination, setPagination]   = useState<Pagination | null>(null);
   const [isLoading, setIsLoading]     = useState(true);
   const [error, setError]             = useState<string | null>(null);
   const [page, setPage]               = useState(1);
-  const [filters, setFilters]         = useState<Filters>({ search: '' });
+  const [filters, setFilters]         = useState<Filters>({ search: urlQuery });
+
+  // Sync URL ?q= param into filters when it changes (e.g. new Header search)
+  useEffect(() => {
+    setFilters((prev) => {
+      if (prev.search === urlQuery) return prev;
+      return { ...prev, search: urlQuery };
+    });
+    setPage(1);
+  }, [urlQuery]);
 
   const debouncedSearch = useDebounce(filters.search, 400);
 
