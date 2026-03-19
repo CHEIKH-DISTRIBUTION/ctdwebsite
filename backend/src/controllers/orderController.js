@@ -447,12 +447,10 @@ exports.updateOrderStatus = async (req, res) => {
 
     await order.save();
 
-    // Send confirmation email (fire-and-forget)
-    if (status === 'confirmed') {
-      const userEmail = order.contactInfo?.email;
-      if (userEmail) {
-        emailService.sendOrderConfirmation(order, userEmail).catch(() => {});
-      }
+    // Send status-update email (fire-and-forget)
+    const userEmail = order.contactInfo?.email;
+    if (userEmail) {
+      emailService.sendOrderStatusUpdate(order, userEmail).catch(() => {});
     }
 
     // Send SMS notification (fire-and-forget)

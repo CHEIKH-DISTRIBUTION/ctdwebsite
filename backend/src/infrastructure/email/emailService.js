@@ -383,4 +383,95 @@ async function sendEmailVerification(email, verificationToken) {
   }
 }
 
-module.exports = { sendOrderConfirmation, sendPasswordResetEmail, sendLowStockAlert, sendEmailVerification };
+/**
+ * Send an order-status-update email to the customer.
+ * Called each time an admin/delivery person changes the order status.
+ * @param {object} order — the order document (needs orderNumber, status, total, items)
+ * @param {string} userEmail
+ */
+async function sendOrderStatusUpdate(order, userEmail) {
+  const STATUS_CONFIG = {
+    confirmed:  { label: 'Confirmée',      color: '#001489', emoji: '✅', message: 'Votre commande a été confirmée et sera bientôt préparée.' },
+    preparing:  { label: 'En préparation', color: '#F59E0B', emoji: '📦', message: 'Votre commande est en cours de préparation.' },
+    ready:      { label: 'Prête',          color: '#8B5CF6', emoji: '🎁', message: 'Votre commande est prête et en attente de livraison.' },
+    delivering: { label: 'En livraison',   color: '#F97316', emoji: '🚚', message: 'Votre commande est en cours de livraison. Le livreur arrive bientôt !' },
+    delivered:  { label: 'Livrée',         color: '#16a34a', emoji: '🎉', message: 'Votre commande a été livrée avec succès. Merci pour votre confiance !' },
+    cancelled:  { label: 'Annulée',        color: '#dc2626', emoji: '❌', message: 'Votre commande a été annulée. Si vous avez des questions, contactez-nous.' },
+    refunded:   { label: 'Remboursée',     color: '#6B7280', emoji: '💸', message: 'Votre commande a été remboursée. Le montant sera crédité sous 48h.' },
+  };
+
+  const config = STATUS_CONFIG[order.status];
+  if (!config) return; // 'pending' — no email (initial state, already covered by confirmation)
+
+  const clientUrl = process.env.CLIENT_URL ?? 'http://localhost:3000';
+  const subject = `${config.emoji} Commande #${order.orderNumber} — ${config.label}`;
+
+  const html = `<!DOCTYPE html>
+<html lang="fr">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;margin:0;padding:0;background:#f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:16px 0;">
+    <tr><td align="center" style="padding:0 12px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
+        <tr>
+          <td style="background:#001489;padding:20px 24px;">
+            <h1 style="color:#fff;margin:0;font-size:20px;">Cheikh Distribution</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px;">
+            <div style="text-align:center;margin-bottom:20px;">
+              <span style="font-size:40px;">${config.emoji}</span>
+            </div>
+            <h2 style="color:${config.color};margin-top:0;font-size:18px;text-align:center;">
+              Commande #${order.orderNumber} — ${config.label}
+            </h2>
+            <p style="color:#333;font-size:14px;line-height:1.6;text-align:center;">
+              ${config.message}
+            </p>
+            <table width="100%" cellpadding="0" cellspacing="0" style="margin:20px 0;background:#f9fafb;border-radius:8px;padding:16px;">
+              <tr>
+                <td style="padding:8px 16px;color:#555;font-size:13px;">Commande</td>
+                <td style="padding:8px 16px;text-align:right;font-weight:bold;color:#001489;font-size:13px;">#${order.orderNumber}</td>
+              </tr>
+              <tr>
+                <td style="padding:8px 16px;color:#555;font-size:13px;">Statut</td>
+                <td style="padding:8px 16px;text-align:right;font-size:13px;">
+                  <span style="background:${config.color};color:#fff;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:bold;">
+                    ${config.label}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td style="padding:8px 16px;color:#555;font-size:13px;">Total</td>
+                <td style="padding:8px 16px;text-align:right;font-weight:bold;color:#333;font-size:13px;">${formatXOF(order.total)}</td>
+              </tr>
+            </table>
+            <div style="text-align:center;margin:24px 0;">
+              <a href="${clientUrl}/orders/${order._id}"
+                 style="display:inline-block;background:#001489;color:#fff;padding:12px 24px;border-radius:6px;text-decoration:none;font-size:14px;font-weight:bold;">
+                Suivre ma commande
+              </a>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f0f3ff;padding:16px 24px;text-align:center;">
+            <p style="color:#aaa;font-size:12px;margin:0;">© ${new Date().getFullYear()} Cheikh Distribution · Dakar, Sénégal</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`;
+
+  try {
+    await sendMail(userEmail, subject, html);
+    console.log(`[emailService] Email statut "${order.status}" envoyé à ${userEmail} pour commande #${order.orderNumber}`);
+  } catch (err) {
+    console.error(`[emailService] Erreur envoi statut à ${userEmail}:`, err.message);
+  }
+}
+
+module.exports = { sendOrderConfirmation, sendPasswordResetEmail, sendLowStockAlert, sendEmailVerification, sendOrderStatusUpdate };
