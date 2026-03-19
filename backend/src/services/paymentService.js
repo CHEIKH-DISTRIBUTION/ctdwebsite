@@ -1,28 +1,17 @@
 const axios = require('axios');
+const crypto = require('crypto');
 const config = require('../config');
 const Payment = require('../models/Payment');
 
-// Configuration des APIs de paiement
-const paymentConfig = {
-  wave: {
-    apiKey: config.WAVE_API_KEY,
-    apiUrl: config.WAVE_API_URL,
-    merchantId: config.WAVE_MERCHANT_ID
-  },
-  orangeMoney: {
-    authUrl: config.ORANGE_MONEY_AUTH_URL,
-    paymentUrl: config.ORANGE_MONEY_PAYMENT_URL,
-    merchantKey: config.ORANGE_MONEY_MERCHANT_KEY
-  },
-  stripe: {
-    secretKey: config.STRIPE_SECRET_KEY,
-    webhookSecret: config.STRIPE_WEBHOOK_SECRET
-  }
-};
-
 /**
- * Retry wrapper — retries once on network timeout (ECONNABORTED / ETIMEDOUT).
+ * Payment Service — Wave (direct API) + Orange Money (via PayTech)
+ *
+ * Wave API docs:  https://docs.wave.com/business
+ * PayTech docs:   https://docs.intech.sn/doc_paytech.php
  */
+
+// ── Retry wrapper ───────────────────────────────────────────────────────────
+
 async function withRetry(fn, retries = 1) {
   try {
     return await fn();
@@ -36,33 +25,37 @@ async function withRetry(fn, retries = 1) {
   }
 }
 
-// Wave Money
-exports.initiateWavePayment = async ({ amount, phone, orderId, paymentId }) => {
+// ── Wave (direct API) ───────────────────────────────────────────────────────
+
+/**
+ * Create a Wave checkout session.
+ * POST https://api.wave.com/v1/checkout/sessions
+ *
+ * ⚠️ `amount` must be a string, not a number.
+ * Returns a `wave_launch_url` to redirect the customer to.
+ */
+exports.initiateWavePayment = async ({ amount, orderId, paymentId }) => {
   try {
     const response = await withRetry(() =>
-      axios.post(`${paymentConfig.wave.apiUrl}/payments`, {
-        amount: amount * 100, // Convertir en centimes
+      axios.post(`${config.WAVE_API_URL}/checkout/sessions`, {
+        amount: String(amount),   // Wave requires string
         currency: 'XOF',
-        customer: {
-          phone_number: phone.replace('+', '')
-        },
-        merchant_reference: orderId.toString(),
-        metadata: {
-          paymentId: paymentId.toString()
-        }
+        client_reference: orderId.toString(),
+        success_url: `${config.CLIENT_URL}/payment/pending?paymentId=${paymentId}&orderId=${orderId}&method=wave`,
+        error_url: `${config.CLIENT_URL}/payment/cancel?orderId=${orderId}`,
       }, {
         headers: {
-          Authorization: `Bearer ${paymentConfig.wave.apiKey}`,
-          'Content-Type': 'application/json'
+          Authorization: `Bearer ${config.WAVE_API_KEY}`,
+          'Content-Type': 'application/json',
         },
-        timeout: 10000,
+        timeout: 15000,
       })
     );
 
     return {
       status: 'processing',
-      transactionId: response.data.id,
-      nextAction: response.data.payment_url // URL pour compléter le paiement
+      transactionId: response.data.id,            // cos-xxx
+      nextAction: response.data.wave_launch_url,   // redirect URL
     };
   } catch (error) {
     console.error('Erreur Wave:', error.response?.data || error.message);
@@ -70,178 +63,157 @@ exports.initiateWavePayment = async ({ amount, phone, orderId, paymentId }) => {
   }
 };
 
-// Orange Money
-exports.initiateOrangeMoneyPayment = async ({ amount, phone, orderId, paymentId }) => {
-  try {
-    // 1. Obtenir le token d'authentification
-    const authResponse = await withRetry(() =>
-      axios.post(paymentConfig.orangeMoney.authUrl, {
-        grant_type: 'client_credentials'
-      }, {
-        auth: {
-          username: paymentConfig.orangeMoney.merchantKey,
-          password: ''
-        },
-        timeout: 10000,
-      })
-    );
-
-    // 2. Initier le paiement
-    const paymentResponse = await withRetry(() =>
-      axios.post(paymentConfig.orangeMoney.paymentUrl, {
-        merchant_key: paymentConfig.orangeMoney.merchantKey,
-        currency: 'XOF',
-        order_id: orderId.toString(),
-        amount: amount,
-        return_url: `${config.CLIENT_URL}/payment/pending?paymentId=${paymentId}&orderId=${orderId}`,
-        cancel_url: `${config.CLIENT_URL}/payment/cancel?orderId=${orderId}`,
-        notification_url: `${config.BACKEND_URL}/api/payments/webhook/orange_money`,
-        lang: 'fr',
-        reference: paymentId.toString(),
-        buyer_phone_number: phone.replace('+', '')
-      }, {
-        headers: {
-          Authorization: `Bearer ${authResponse.data.access_token}`
-        },
-        timeout: 10000,
-      })
-    );
-
-    return {
-      status: 'processing',
-      transactionId: paymentResponse.data.pay_token,
-      nextAction: paymentResponse.data.payment_url
-    };
-  } catch (error) {
-    console.error('Erreur Orange Money:', error.response?.data || error.message);
-    throw new Error(error.response?.data?.message || 'Échec de la requête Orange Money');
-  }
-};
-
-// Stripe (cartes bancaires)
-exports.processCardPayment = async ({ amount, cardDetails, email, orderId }) => {
-  try {
-    const stripe = require('stripe')(paymentConfig.stripe.secretKey);
-
-    // Créer un PaymentIntent
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: amount * 100, // en centimes
-      currency: 'xof',
-      payment_method_types: ['card'],
-      metadata: { orderId: orderId.toString() },
-      receipt_email: email
-    });
-
-    // Confirmer le paiement côté client avec Stripe.js
-    return {
-      status: 'processing',
-      transactionId: paymentIntent.id,
-      clientSecret: paymentIntent.client_secret
-    };
-  } catch (error) {
-    console.error('Erreur Stripe:', error.message);
-    throw new Error(error.message);
-  }
-};
-
-// ── Vérification des paiements ───────────────────────────────────────────────
-
+/**
+ * Check Wave checkout session status.
+ * GET https://api.wave.com/v1/checkout/sessions/:id
+ */
 exports.verifyWavePayment = async (transactionId) => {
   const response = await withRetry(() =>
-    axios.get(`${paymentConfig.wave.apiUrl}/payments/${transactionId}`, {
-      headers: { Authorization: `Bearer ${paymentConfig.wave.apiKey}` },
+    axios.get(`${config.WAVE_API_URL}/checkout/sessions/${transactionId}`, {
+      headers: { Authorization: `Bearer ${config.WAVE_API_KEY}` },
       timeout: 10000,
     })
   );
 
-  return {
-    status: response.data.status === 'SUCCESS' ? 'completed' : 'failed',
-    processedAt: response.data.completed_at
-  };
+  const status = response.data.checkout_status;
+  let mapped = 'processing';
+  if (status === 'complete') mapped = 'completed';
+  else if (status === 'expired' || status === 'error') mapped = 'failed';
+
+  return { status: mapped, processedAt: response.data.when_completed || null };
 };
-
-exports.verifyOrangeMoneyPayment = async (transactionId) => {
-  // 1. Obtenir le token d'authentification
-  const authResponse = await withRetry(() =>
-    axios.post(paymentConfig.orangeMoney.authUrl, {
-      grant_type: 'client_credentials'
-    }, {
-      auth: { username: paymentConfig.orangeMoney.merchantKey, password: '' },
-      timeout: 10000,
-    })
-  );
-
-  // 2. Vérifier le statut du paiement via pay_token
-  const statusResponse = await withRetry(() =>
-    axios.get(`${paymentConfig.orangeMoney.paymentUrl}/${transactionId}`, {
-      headers: { Authorization: `Bearer ${authResponse.data.access_token}` },
-      timeout: 10000,
-    })
-  );
-
-  const data = statusResponse.data;
-  let status = 'processing';
-  if (data.status === 'SUCCESS' || data.status === 'SUCCESSFULL') status = 'completed';
-  else if (data.status === 'FAILED' || data.status === 'EXPIRED') status = 'failed';
-
-  return { status, processedAt: data.updated_at || null };
-};
-
-// ── Webhook handlers ─────────────────────────────────────────────────────────
 
 /**
- * Process a Wave webhook payload.
- * Wave sends: { id, status, merchant_reference, metadata: { paymentId } }
+ * Handle Wave webhook payload.
+ * Wave sends: { type: "checkout.session.completed", data: { id, client_reference, checkout_status } }
  */
 exports.handleWaveWebhook = async (payload) => {
-  const transactionId = payload.id;
-  const paymentId = payload.metadata?.paymentId;
+  const type = payload.type;
+  const data = payload.data || {};
+  const transactionId = data.id;
+  const clientRef = data.client_reference;
 
-  const payment = paymentId
-    ? await Payment.findById(paymentId)
-    : await Payment.findOne({ transactionId });
+  // Find payment by transactionId or by order reference
+  let payment = await Payment.findOne({ transactionId });
+  if (!payment && clientRef) {
+    payment = await Payment.findOne({ order: clientRef });
+  }
 
   if (!payment) {
     console.warn('[webhook:wave] Payment not found for', transactionId);
     return null;
   }
 
-  if (payload.status === 'SUCCESS') {
+  if (type === 'checkout.session.completed' && data.checkout_status === 'complete') {
     payment.status = 'completed';
     payment.processedAt = new Date();
-  } else if (payload.status === 'FAILED' || payload.status === 'CANCELLED') {
+  } else if (data.checkout_status === 'expired' || data.checkout_status === 'error') {
     payment.status = 'failed';
-    payment.errorMessage = payload.error || 'Paiement échoué';
+    payment.errorMessage = data.last_error || 'Paiement échoué';
   }
 
   payment.paymentDetails = { ...payment.paymentDetails, gatewayWebhook: payload };
   await payment.save();
   return payment;
+};
+
+// ── Orange Money (via PayTech) ──────────────────────────────────────────────
+
+/**
+ * Initiate an Orange Money payment via PayTech.
+ * POST https://paytech.sn/api/payment/request-payment
+ */
+exports.initiateOrangeMoneyPayment = async ({ amount, orderId, paymentId }) => {
+  try {
+    const response = await withRetry(() =>
+      axios.post('https://paytech.sn/api/payment/request-payment', {
+        item_name: `Commande ${orderId}`,
+        item_price: Math.round(amount),   // integer XOF, no decimals
+        currency: 'XOF',
+        ref_command: paymentId.toString(),
+        ipn_url: `${config.BACKEND_URL}/api/payments/webhook/orange_money`,
+        success_url: `${config.CLIENT_URL}/payment/pending?paymentId=${paymentId}&orderId=${orderId}&method=orange_money`,
+        cancel_url: `${config.CLIENT_URL}/payment/cancel?orderId=${orderId}`,
+        env: config.NODE_ENV === 'production' ? 'prod' : 'test',
+        custom_field: JSON.stringify({ orderId: orderId.toString(), paymentId: paymentId.toString() }),
+      }, {
+        headers: {
+          'API_KEY': config.PAYTECH_API_KEY,
+          'API_SECRET': config.PAYTECH_API_SECRET,
+          'Content-Type': 'application/json',
+        },
+        timeout: 15000,
+      })
+    );
+
+    if (!response.data.success) {
+      throw new Error(response.data.message || 'PayTech a refusé la requête');
+    }
+
+    return {
+      status: 'processing',
+      transactionId: response.data.token,
+      nextAction: response.data.redirect_url,
+    };
+  } catch (error) {
+    console.error('Erreur Orange Money (PayTech):', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || 'Échec de la requête Orange Money');
+  }
 };
 
 /**
- * Process an Orange Money webhook payload.
- * Orange Money sends: { status, pay_token, txnid, order_id, reference }
+ * Verify Orange Money payment status via PayTech.
+ */
+exports.verifyOrangeMoneyPayment = async (transactionId) => {
+  const response = await withRetry(() =>
+    axios.get(`https://paytech.sn/api/payment/get-status?token_payment=${transactionId}`, {
+      headers: {
+        'API_KEY': config.PAYTECH_API_KEY,
+        'API_SECRET': config.PAYTECH_API_SECRET,
+      },
+      timeout: 10000,
+    })
+  );
+
+  const data = response.data;
+  let status = 'processing';
+  if (data.status === 'completed' || data.status === 'success') status = 'completed';
+  else if (data.status === 'canceled' || data.status === 'expired') status = 'failed';
+
+  return { status, processedAt: data.updated_at || null };
+};
+
+/**
+ * Handle PayTech IPN webhook (for Orange Money).
+ * PayTech sends: { type_event, ref_command, token, payment_method, api_key_sha256, ... }
  */
 exports.handleOrangeMoneyWebhook = async (payload) => {
-  const paymentId = payload.reference;
-  const transactionId = payload.pay_token;
+  // Verify authenticity: hash of our API key must match
+  const expectedKeyHash = crypto
+    .createHash('sha256')
+    .update(config.PAYTECH_API_KEY || '')
+    .digest('hex');
 
-  const payment = paymentId
-    ? await Payment.findById(paymentId)
-    : await Payment.findOne({ transactionId });
-
-  if (!payment) {
-    console.warn('[webhook:orange_money] Payment not found for', transactionId);
+  if (payload.api_key_sha256 !== expectedKeyHash) {
+    console.warn('[webhook:paytech] Invalid api_key_sha256 — rejected');
     return null;
   }
 
-  if (payload.status === 'SUCCESS' || payload.status === 'SUCCESSFULL') {
+  const paymentId = payload.ref_command;
+  const payment = await Payment.findById(paymentId);
+
+  if (!payment) {
+    console.warn('[webhook:paytech] Payment not found for ref_command', paymentId);
+    return null;
+  }
+
+  // Idempotent: skip if already completed
+  if (payment.status === 'completed') return payment;
+
+  if (payload.type_event === 'sale_complete') {
     payment.status = 'completed';
+    payment.transactionId = payload.token;
     payment.processedAt = new Date();
-  } else if (payload.status === 'FAILED' || payload.status === 'EXPIRED') {
-    payment.status = 'failed';
-    payment.errorMessage = payload.message || 'Paiement échoué';
   }
 
   payment.paymentDetails = { ...payment.paymentDetails, gatewayWebhook: payload };
@@ -249,26 +221,16 @@ exports.handleOrangeMoneyWebhook = async (payload) => {
   return payment;
 };
 
-// ── Remboursements ───────────────────────────────────────────────────────────
+// ── Remboursements ──────────────────────────────────────────────────────────
 
-exports.processWaveRefund = async (transactionId) => {
-  // Wave Sénégal ne supporte pas le remboursement API automatique.
-  // Le remboursement doit être effectué manuellement via le dashboard Wave Business.
-  throw new Error('Remboursement Wave : veuillez effectuer le remboursement manuellement depuis le dashboard Wave Business');
+exports.processWaveRefund = async () => {
+  throw new Error(
+    'Remboursement Wave : veuillez effectuer le remboursement manuellement depuis le dashboard Wave Business'
+  );
 };
 
-exports.processOrangeMoneyRefund = async (transactionId) => {
-  // Orange Money ne supporte pas le remboursement API automatique.
-  throw new Error('Remboursement Orange Money : veuillez effectuer le remboursement manuellement');
-};
-
-exports.processCardRefund = async (transactionId) => {
-  const stripe = require('stripe')(paymentConfig.stripe.secretKey);
-  const refund = await stripe.refunds.create({
-    payment_intent: transactionId,
-  });
-  return {
-    status: refund.status === 'succeeded' ? 'refunded' : 'failed',
-    refundId: refund.id,
-  };
+exports.processOrangeMoneyRefund = async () => {
+  throw new Error(
+    'Remboursement Orange Money : veuillez effectuer le remboursement manuellement'
+  );
 };

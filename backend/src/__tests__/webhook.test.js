@@ -7,24 +7,22 @@
  *  - POST /api/payments/webhook/wave
  *  - POST /api/payments/webhook/orange_money
  *
- * The webhook route is public (no JWT required) and uses HMAC-SHA256
- * to authenticate incoming callbacks from payment providers.
+ * Wave:
+ *  - Controller verifies HMAC-SHA256 via `Wave-Signature` header
+ *  - Valid signature → processing (may 400 if payment not found, but NOT 401)
+ *  - Invalid / missing signature → 401
  *
- * Expected behaviour:
- *  - Valid HMAC signature   → 400 (signature accepted; further processing fails
- *    because handleWaveWebhook/handleOrangeMoneyWebhook are not yet implemented,
- *    so the catch block returns 400)
- *  - Invalid HMAC signature → 401 (rejected by verifyHmacSignature)
- *  - Missing signature      → 401 (rejected by verifyHmacSignature)
- *  - Unknown provider       → 400 (default case in the switch)
+ * Orange Money (PayTech):
+ *  - No HMAC header — PayTech sends `api_key_sha256` in the body
+ *  - Verification happens inside handleOrangeMoneyWebhook (service layer)
+ *  - Controller always lets the request through to the service
  */
 const request = require('supertest');
 const crypto  = require('crypto');
 const app     = require('../server');
 
 // Secrets are set in envSetup.js
-const WAVE_SECRET   = process.env.WAVE_API_SECRET   ?? 'test-wave-secret';
-const ORANGE_SECRET = process.env.ORANGE_MONEY_API_SECRET ?? 'test-orange-secret';
+const WAVE_SECRET = process.env.WAVE_API_SECRET ?? 'test-wave-secret';
 
 /**
  * Compute the HMAC-SHA256 hex digest of `body` using `secret`.
@@ -45,7 +43,7 @@ describe('POST /api/payments/webhook/wave', () => {
     const res = await request(app)
       .post('/api/payments/webhook/wave')
       .set('Content-Type', 'application/json')
-      .set('X-Wave-Signature', signature)
+      .set('Wave-Signature', signature)
       .send(samplePayload);
 
     // Signature check passes → processing continues and fails internally → 400
@@ -57,7 +55,7 @@ describe('POST /api/payments/webhook/wave', () => {
     const res = await request(app)
       .post('/api/payments/webhook/wave')
       .set('Content-Type', 'application/json')
-      .set('X-Wave-Signature', 'deadbeefdeadbeef')
+      .set('Wave-Signature', 'deadbeefdeadbeef')
       .send(samplePayload);
 
     expect(res.status).toBe(401);
@@ -80,77 +78,65 @@ describe('POST /api/payments/webhook/wave', () => {
     const res = await request(app)
       .post('/api/payments/webhook/wave')
       .set('Content-Type', 'application/json')
-      .set('X-Wave-Signature', wrongSignature)
+      .set('Wave-Signature', wrongSignature)
       .send(samplePayload);
 
     expect(res.status).toBe(401);
   });
 
   it('rejects a signature for a different body (replay/tamper)', async () => {
-    // Sign the original payload but send a tampered one
     const validSignature  = sign(samplePayload, WAVE_SECRET);
     const tamperedPayload = JSON.stringify({ event: 'payment.completed', orderId: 'EVIL' });
 
     const res = await request(app)
       .post('/api/payments/webhook/wave')
       .set('Content-Type', 'application/json')
-      .set('X-Wave-Signature', validSignature)
+      .set('Wave-Signature', validSignature)
       .send(tamperedPayload);
 
     expect(res.status).toBe(401);
   });
 });
 
-// ── Orange Money webhook ──────────────────────────────────────────────────────
+// ── Orange Money webhook (PayTech) ────────────────────────────────────────────
+// PayTech uses api_key_sha256 in the payload body, verified by the service layer.
+// The controller does NOT check any HMAC header for Orange Money.
 
 describe('POST /api/payments/webhook/orange_money', () => {
-  it('accepts a valid HMAC-SHA256 signature (no 401)', async () => {
-    const signature = sign(samplePayload, ORANGE_SECRET);
+  it('passes through to service (no 401 from controller)', async () => {
+    // PayTech sends api_key_sha256 in the body — the service rejects bad hashes.
+    // At the controller level, the request should not be rejected with 401.
+    const paytechPayload = JSON.stringify({
+      type_event: 'sale_complete',
+      ref_command: 'FAKE_PAYMENT_ID',
+      token: 'tok_123',
+      api_key_sha256: 'some_hash',
+    });
 
     const res = await request(app)
       .post('/api/payments/webhook/orange_money')
       .set('Content-Type', 'application/json')
-      .set('X-Orange-Signature', signature)
-      .send(samplePayload);
+      .send(paytechPayload);
 
+    // Should NOT be 401 — controller doesn't verify signature for PayTech
     expect(res.status).not.toBe(401);
   });
 
-  it('rejects an invalid signature with 401', async () => {
-    const res = await request(app)
-      .post('/api/payments/webhook/orange_money')
-      .set('Content-Type', 'application/json')
-      .set('X-Orange-Signature', 'badsignature123')
-      .send(samplePayload);
-
-    expect(res.status).toBe(401);
-    expect(res.body.message).toMatch(/invalid signature/i);
-  });
-
-  it('rejects a missing signature with 401', async () => {
-    const res = await request(app)
-      .post('/api/payments/webhook/orange_money')
-      .set('Content-Type', 'application/json')
-      .send(samplePayload);
-
-    expect(res.status).toBe(401);
-  });
-});
-
-// ── Cross-provider isolation ──────────────────────────────────────────────────
-
-describe('Cross-provider signature isolation', () => {
-  it('rejects a Wave signature sent to the Orange Money endpoint', async () => {
-    // Sign with Wave secret but send to orange_money endpoint
-    const waveSignature = sign(samplePayload, WAVE_SECRET);
+  it('returns 400 when handleOrangeMoneyWebhook rejects invalid api_key_sha256', async () => {
+    const paytechPayload = JSON.stringify({
+      type_event: 'sale_complete',
+      ref_command: 'NONEXISTENT',
+      token: 'tok_bad',
+      api_key_sha256: 'definitely_wrong_hash',
+    });
 
     const res = await request(app)
       .post('/api/payments/webhook/orange_money')
       .set('Content-Type', 'application/json')
-      .set('X-Orange-Signature', waveSignature) // wrong secret for this provider
-      .send(samplePayload);
+      .send(paytechPayload);
 
-    expect(res.status).toBe(401);
+    // Service rejects → returns null → controller responds 400
+    expect(res.status).toBe(400);
   });
 });
 
@@ -163,7 +149,6 @@ describe('POST /api/payments/webhook/unknown_provider', () => {
       .set('Content-Type', 'application/json')
       .send(samplePayload);
 
-    // Unknown provider falls through the switch → 400
     expect(res.status).toBe(400);
   });
 });

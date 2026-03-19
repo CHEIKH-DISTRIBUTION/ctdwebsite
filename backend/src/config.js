@@ -2,15 +2,15 @@
 module.exports = {
   // Payment Gateway Keys
   WAVE_API_KEY: process.env.WAVE_API_KEY || '',
-  WAVE_API_URL: process.env.WAVE_API_URL || 'https://api.wave.com',
+  WAVE_API_URL: process.env.WAVE_API_URL || 'https://api.wave.com/v1',
   WAVE_MERCHANT_ID: process.env.WAVE_MERCHANT_ID || '',
 
   ORANGE_MONEY_AUTH_URL: process.env.ORANGE_MONEY_AUTH_URL || '',
   ORANGE_MONEY_PAYMENT_URL: process.env.ORANGE_MONEY_PAYMENT_URL || '',
   ORANGE_MONEY_MERCHANT_KEY: process.env.ORANGE_MONEY_MERCHANT_KEY || '',
 
-  STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY || '',
-  STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET || '',
+  PAYTECH_API_KEY: process.env.PAYTECH_API_KEY || '',
+  PAYTECH_API_SECRET: process.env.PAYTECH_API_SECRET || '',
 
   // Database
   MONGODB_URI: process.env.MONGODB_URI || 'mongodb://localhost:27017/cheikh_distribution',

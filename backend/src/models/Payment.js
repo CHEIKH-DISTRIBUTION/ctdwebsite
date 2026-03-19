@@ -19,7 +19,7 @@ const paymentSchema = new mongoose.Schema({
   method: {
     type: String,
     required: true,
-    enum: ['wave', 'orange_money', 'credit_card', 'cash_on_delivery']
+    enum: ['wave', 'orange_money', 'cash', 'bank_transfer']
   },
   status: {
     type: String,

@@ -6,14 +6,12 @@ const asyncHandler = require('../middleware/async');
 const {
   initiateWavePayment,
   initiateOrangeMoneyPayment,
-  processCardPayment,
   verifyWavePayment,
   verifyOrangeMoneyPayment,
   handleWaveWebhook,
   handleOrangeMoneyWebhook,
   processWaveRefund,
   processOrangeMoneyRefund,
-  processCardRefund,
 } = require('../services/paymentService');
 
 /**
@@ -96,17 +94,11 @@ exports.initiatePayment = asyncHandler(async (req, res, next) => {
         });
         break;
       
-      case 'credit_card':
-        paymentResult = await processCardPayment({
-          amount: order.total,
-          cardDetails: paymentDetails.card,
-          orderId: order._id,
-          paymentId: payment._id,
-          email: req.user.email
-        });
+      case 'bank_transfer':
+        paymentResult = { status: 'pending' };
         break;
-      
-      case 'cash_on_delivery':
+
+      case 'cash':
         paymentResult = { status: 'pending' };
         break;
       
@@ -218,7 +210,7 @@ exports.paymentWebhook = asyncHandler(async (req, res, next) => {
   // Reject the request immediately if the HMAC signature is invalid.
   // This prevents replay attacks and spoofed webhook calls.
   if (provider === 'wave') {
-    const signature = req.headers['x-wave-signature'];
+    const signature = req.headers['wave-signature'];
     const secret    = process.env.WAVE_API_SECRET;
 
     if (!verifyHmacSignature(rawBody, secret, signature)) {
@@ -227,15 +219,8 @@ exports.paymentWebhook = asyncHandler(async (req, res, next) => {
     }
   }
 
-  if (provider === 'orange_money') {
-    const signature = req.headers['x-orange-signature'];
-    const secret    = process.env.ORANGE_MONEY_API_SECRET;
-
-    if (!verifyHmacSignature(rawBody, secret, signature)) {
-      console.warn('[webhook] Invalid Orange Money signature — request rejected');
-      return res.status(401).json({ success: false, message: 'Invalid signature' });
-    }
-  }
+  // Orange Money (PayTech): signature verified inside handleOrangeMoneyWebhook
+  // via api_key_sha256 field in payload — no HMAC header to check here.
   // ─────────────────────────────────────────────────────────────────────────
 
   try {
@@ -293,10 +278,6 @@ exports.processRefund = asyncHandler(async (req, res, next) => {
       
       case 'orange_money':
         refundResult = await processOrangeMoneyRefund(payment.transactionId);
-        break;
-      
-      case 'credit_card':
-        refundResult = await processCardRefund(payment.transactionId);
         break;
       
       default:
