@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useSyncExternalStore } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { useFavorites } from '@/features/favorites';
@@ -10,6 +10,18 @@ import { CartDrawer } from '@/components/ui/CartDrawer';
 // Auth pages are always accessible regardless of role
 const AUTH_PREFIXES = ['/login', '/register', '/forgot-password', '/reset-password'];
 
+/** Wait for Zustand persist to finish rehydrating from localStorage. */
+function useHasHydrated() {
+  return useSyncExternalStore(
+    (cb) => {
+      const unsub = useAuthStore.persist.onFinishHydration(cb);
+      return () => unsub();
+    },
+    () => useAuthStore.persist.hasHydrated(),
+    () => false, // SSR — never hydrated
+  );
+}
+
 export function RootLayoutClient({
   children,
 }: {
@@ -17,19 +29,21 @@ export function RootLayoutClient({
 }) {
   const { autoLogin, user, isAuthenticated } = useAuthStore();
   const { fetchFavorites, clear: clearFavorites } = useFavorites();
-  const [mounted, setMounted] = useState(false);
+  const hydrated = useHasHydrated();
+  const [profileLoaded, setProfileLoaded] = useState(false);
   const pathname  = usePathname();
   const router    = useRouter();
 
+  // Once hydrated, trigger autoLogin (fetches profile) then mark ready
   useEffect(() => {
-    autoLogin();
-    setMounted(true);
+    if (!hydrated) return;
+    autoLogin().finally(() => setProfileLoaded(true));
 
     // Register service worker for PWA
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
-  }, [autoLogin]);
+  }, [hydrated, autoLogin]);
 
   // Sync favorites with server whenever authentication state changes
   useEffect(() => {
@@ -56,11 +70,11 @@ export function RootLayoutClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role, pathname]);
 
-  // Show loader while hydrating OR while an authenticated session is resolving
-  // the user profile (prevents flash of wrong layout for delivery users)
-  const isResolvingUser = isAuthenticated && !user;
+  // Show spinner until Zustand rehydrates AND profile resolves
+  // This prevents the homepage flash for delivery users
+  const ready = hydrated && profileLoaded;
 
-  if (!mounted || isResolvingUser) {
+  if (!ready) {
     return (
       <>
         <div className="flex min-h-screen items-center justify-center bg-white">
