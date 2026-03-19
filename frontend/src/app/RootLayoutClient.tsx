@@ -56,11 +56,18 @@ export function RootLayoutClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.role, pathname]);
 
-  if (!mounted) {
+  // Show loader while hydrating OR while an authenticated session is resolving
+  // the user profile (prevents flash of wrong layout for delivery users)
+  const isResolvingUser = isAuthenticated && !user;
+
+  if (!mounted || isResolvingUser) {
     return (
       <>
-        <div className="flex min-h-screen items-center justify-center">
-          Chargement...
+        <div className="flex min-h-screen items-center justify-center bg-white">
+          <div
+            className="w-10 h-10 rounded-full border-4 animate-spin"
+            style={{ borderColor: '#001489', borderTopColor: 'transparent' }}
+          />
         </div>
         <Toaster position="top-right" richColors />
       </>
