@@ -592,7 +592,7 @@ export default function HomePage() {
               <Button asChild size="lg" className="bg-white text-[#001489] hover:bg-gray-50 px-8 py-4 text-lg rounded-xl font-semibold">
                 <Link href="/products">Commencer à shopper</Link>
               </Button>
-              <Button asChild size="lg" variant="outline" className="border-2 border-white text-[#001489] hover:bg-white hover:text-gray-900 px-8 py-4 text-lg rounded-xl font-semibold">
+              <Button asChild size="lg" variant="outline" className="border-2 border-white text-white hover:bg-white hover:text-[#001489] px-8 py-4 text-lg rounded-xl font-semibold">
                 <Link href="/contact">Nous contacter</Link>
               </Button>
             </motion.div>
