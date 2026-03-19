@@ -55,24 +55,21 @@ export function RootLayoutClient({
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated]);
 
+  // Detect if the current user needs a role-based redirect
+  const isAuthPage = AUTH_PREFIXES.some((p) => pathname.startsWith(p));
+  const needsRedirect = user && !isAuthPage && user.role === 'delivery' && !pathname.startsWith('/delivery');
+
   // Role-based redirect — fires when user profile loads or route changes.
-  // Delivery persons must stay in /delivery; admins can roam freely.
   useEffect(() => {
-    if (!user) return;
-
-    const isAuthPage = AUTH_PREFIXES.some((p) => pathname.startsWith(p));
-    if (isAuthPage) return;
-
-    if (user.role === 'delivery' && !pathname.startsWith('/delivery')) {
+    if (needsRedirect) {
       router.replace('/delivery');
     }
-  // pathname intentionally included so the guard re-runs on navigation
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.role, pathname]);
+  }, [needsRedirect]);
 
   // Show spinner until Zustand rehydrates AND profile resolves
-  // This prevents the homepage flash for delivery users
-  const ready = hydrated && profileLoaded;
+  // Also keep spinner while a redirect is pending (prevents flash)
+  const ready = hydrated && profileLoaded && !needsRedirect;
 
   if (!ready) {
     return (
