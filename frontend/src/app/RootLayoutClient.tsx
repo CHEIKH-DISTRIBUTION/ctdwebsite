@@ -24,6 +24,11 @@ export function RootLayoutClient({
   useEffect(() => {
     autoLogin();
     setMounted(true);
+
+    // Register service worker for PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
   }, [autoLogin]);
 
   // Sync favorites with server whenever authentication state changes

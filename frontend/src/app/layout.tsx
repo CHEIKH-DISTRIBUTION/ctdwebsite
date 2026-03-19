@@ -19,6 +19,13 @@ export const metadata: Metadata = {
     'Wave',
     'Orange Money',
   ],
+  manifest: '/manifest.json',
+  themeColor: '#001489',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Cheikh Distri',
+  },
   openGraph: {
     type: 'website',
     locale: 'fr_SN',

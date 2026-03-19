@@ -1,0 +1,31 @@
+{
+  "name": "Cheikh Distribution — Grossiste au Sénégal",
+  "short_name": "Cheikh Distri",
+  "description": "Grossiste alimentaire et produits d'hygiène. Commandez en gros avec livraison à Dakar.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#001489",
+  "orientation": "portrait-primary",
+  "lang": "fr",
+  "categories": ["shopping", "business"],
+  "icons": [
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ]
+}
