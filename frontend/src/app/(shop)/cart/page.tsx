@@ -450,7 +450,7 @@ export default function CartPage() {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="space-y-6"
           >
-            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 sticky top-4">
+            <div className="bg-white p-6 rounded-2xl shadow-lg border border-gray-200 lg:sticky lg:top-4">
               <h2 className="text-xl font-semibold mb-6 pb-4 border-b border-gray-200 flex items-center gap-2">
                 <Gift className="h-5 w-5" />
                 Résumé de la commande

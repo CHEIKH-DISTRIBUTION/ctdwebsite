@@ -217,7 +217,7 @@ export default function ProductsPage() {
             )}
 
             {/* Spacer + sort + view */}
-            <div className="ml-auto flex items-center gap-2">
+            <div className="ml-auto flex items-center gap-2 shrink-0">
               <select
                 title="Trier par"
                 value={filters.sort ?? 'rating'}

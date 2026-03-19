@@ -82,7 +82,7 @@ export default function AboutPage() {
             
             <motion.h1
               variants={fadeIn('up', 0.3)}
-              className="text-5xl md:text-6xl font-extrabold leading-tight mb-6"
+              className="text-4xl sm:text-5xl md:text-6xl font-extrabold leading-tight mb-6"
             >
               Qui sommes-<span className="text-[#f9461c]">nous</span>?
             </motion.h1>

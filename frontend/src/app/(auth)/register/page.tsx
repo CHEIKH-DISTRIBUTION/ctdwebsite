@@ -191,7 +191,7 @@ export default function RegisterPage() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            className="bg-white rounded-2xl p-8 shadow-lg border border-gray-200"
+            className="bg-white rounded-2xl p-5 sm:p-8 shadow-lg border border-gray-200"
           >
             <div className="text-center mb-8 lg:hidden">
               <div className="w-16 h-16 mx-auto bg-blue-100 rounded-full flex items-center justify-center mb-4">

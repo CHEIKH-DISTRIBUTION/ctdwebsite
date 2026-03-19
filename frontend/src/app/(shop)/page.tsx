@@ -479,7 +479,7 @@ export default function HomePage() {
             whileInView="show"
             viewport={{ once: true }}
             variants={staggerContainer()}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 text-center"
           >
             {[
               { value: publicStats ? `${publicStats.totalOrders.toLocaleString('fr-FR')}+` : '—', label: 'Commandes Livrées',   icon: <Users className="h-8 w-8" /> },

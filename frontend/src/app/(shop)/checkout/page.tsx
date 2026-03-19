@@ -641,7 +641,7 @@ export default function CheckoutPage() {
             className="space-y-4"
           >
             <div
-              className="bg-white rounded-2xl p-6 sticky top-4"
+              className="bg-white rounded-2xl p-6 lg:sticky lg:top-4"
               style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.06)' }}
             >
               <h2 className="text-base font-semibold text-gray-900 mb-5 pb-4 flex items-center justify-between"
