@@ -572,7 +572,7 @@ exports.confirmPayment = async (req, res) => {
       order.status = 'confirmed';
       order.tracking.push({
         status: 'confirmed',
-        message: 'Virement bancaire confirmé par l\'administration',
+        message: 'Paiement confirmé par l\'administration',
         updatedBy: req.user.id,
       });
     }

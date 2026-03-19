@@ -391,7 +391,7 @@ export default function AdminOrderDetailPage() {
                 </span>
               </div>
             </div>
-            {order.paymentMethod === 'bank_transfer' && order.paymentStatus !== 'completed' && (
+            {order.paymentStatus !== 'completed' && (
               <Button
                 onClick={handleConfirmPayment}
                 disabled={confirmingPayment}
@@ -406,7 +406,7 @@ export default function AdminOrderDetailPage() {
                 ) : (
                   <span className="flex items-center gap-2">
                     <CheckCircle2 className="h-3.5 w-3.5" />
-                    Confirmer virement reçu
+                    Confirmer paiement reçu
                   </span>
                 )}
               </Button>
