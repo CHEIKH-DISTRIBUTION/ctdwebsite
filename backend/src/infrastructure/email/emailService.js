@@ -233,23 +233,38 @@ async function sendPasswordResetEmail(email, resetToken) {
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"></head>
-<body style="font-family:Arial,sans-serif;background:#f4f4f4;padding:24px;">
-  <div style="max-width:520px;margin:auto;background:#fff;border-radius:8px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,.08);">
-    <h2 style="color:#001489;margin-top:0;">Réinitialisation de mot de passe</h2>
-    <p>Vous recevez cet email car vous (ou quelqu'un d'autre) avez demandé à réinitialiser le mot de passe de votre compte.</p>
-    <p>Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe. Ce lien expirera dans <strong>10 minutes</strong>.</p>
-    <div style="text-align:center;margin:32px 0;">
-      <a href="${resetUrl}"
-         style="background:#001489;color:#fff;padding:14px 28px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">
-        Réinitialiser mon mot de passe
-      </a>
-    </div>
-    <p style="color:#888;font-size:13px;">Si vous n'avez pas demandé cette réinitialisation, ignorez simplement cet email. Votre mot de passe restera inchangé.</p>
-    <p style="color:#aaa;font-size:12px;border-top:1px solid #eee;padding-top:16px;margin-bottom:0;">
-      © ${new Date().getFullYear()} Cheikh Distribution · Dakar, Sénégal
-    </p>
-  </div>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;margin:0;padding:0;background:#f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:16px 0;">
+    <tr><td align="center" style="padding:0 12px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
+        <tr>
+          <td style="background:#001489;padding:20px 24px;">
+            <h1 style="color:#fff;margin:0;font-size:20px;">Cheikh Distribution</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px;">
+            <h2 style="color:#001489;margin-top:0;font-size:18px;">Réinitialisation de mot de passe</h2>
+            <p style="color:#333;font-size:14px;line-height:1.6;">Vous recevez cet email car vous (ou quelqu'un d'autre) avez demandé à réinitialiser le mot de passe de votre compte.</p>
+            <p style="color:#333;font-size:14px;line-height:1.6;">Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe. Ce lien expirera dans <strong>10 minutes</strong>.</p>
+            <div style="text-align:center;margin:28px 0;">
+              <a href="${resetUrl}"
+                 style="display:inline-block;background:#001489;color:#fff;padding:14px 28px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">
+                Réinitialiser mon mot de passe
+              </a>
+            </div>
+            <p style="color:#888;font-size:13px;">Si vous n'avez pas demandé cette réinitialisation, ignorez simplement cet email. Votre mot de passe restera inchangé.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f0f3ff;padding:16px 24px;text-align:center;">
+            <p style="color:#aaa;font-size:12px;margin:0;">© ${new Date().getFullYear()} Cheikh Distribution · Dakar, Sénégal</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
 </body>
 </html>`;
 
@@ -326,22 +341,37 @@ async function sendEmailVerification(email, verificationToken) {
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
-<head><meta charset="UTF-8"></head>
-<body style="font-family:Arial,sans-serif;background:#f4f4f4;padding:24px;">
-  <div style="max-width:520px;margin:auto;background:#fff;border-radius:8px;padding:32px;box-shadow:0 2px 8px rgba(0,0,0,.08);">
-    <h2 style="color:#001489;margin-top:0;">Bienvenue chez Cheikh Distribution !</h2>
-    <p>Merci de vous être inscrit. Pour activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous.</p>
-    <div style="text-align:center;margin:32px 0;">
-      <a href="${verifyUrl}"
-         style="background:#001489;color:#fff;padding:14px 28px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">
-        Confirmer mon email
-      </a>
-    </div>
-    <p style="color:#888;font-size:13px;">Si vous n'avez pas créé de compte, ignorez cet email.</p>
-    <p style="color:#aaa;font-size:12px;border-top:1px solid #eee;padding-top:16px;margin-bottom:0;">
-      © ${new Date().getFullYear()} Cheikh Distribution · Dakar, Sénégal
-    </p>
-  </div>
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="font-family:Arial,sans-serif;margin:0;padding:0;background:#f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f4;padding:16px 0;">
+    <tr><td align="center" style="padding:0 12px;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="max-width:520px;background:#fff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08);">
+        <tr>
+          <td style="background:#001489;padding:20px 24px;">
+            <h1 style="color:#fff;margin:0;font-size:20px;">Cheikh Distribution</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:24px;">
+            <h2 style="color:#001489;margin-top:0;font-size:18px;">Bienvenue !</h2>
+            <p style="color:#333;font-size:14px;line-height:1.6;">Merci de vous être inscrit. Pour activer votre compte, veuillez confirmer votre adresse email en cliquant sur le bouton ci-dessous.</p>
+            <div style="text-align:center;margin:28px 0;">
+              <a href="${verifyUrl}"
+                 style="display:inline-block;background:#001489;color:#fff;padding:14px 28px;border-radius:6px;text-decoration:none;font-size:15px;font-weight:bold;">
+                Confirmer mon email
+              </a>
+            </div>
+            <p style="color:#888;font-size:13px;">Si vous n'avez pas créé de compte, ignorez cet email.</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f0f3ff;padding:16px 24px;text-align:center;">
+            <p style="color:#aaa;font-size:12px;margin:0;">© ${new Date().getFullYear()} Cheikh Distribution · Dakar, Sénégal</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
 </body>
 </html>`;
 
